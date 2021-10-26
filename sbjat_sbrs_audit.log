@@ -1,0 +1,46 @@
+urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): jira.sco.cisco.com:443
+Starting new HTTPS connection (1): jira.sco.cisco.com:443
+urllib3.connectionpool - DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/serverInfo HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/serverInfo HTTP/1.1" 200 None
+urllib3.connectionpool - DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/field HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/field HTTP/1.1" 200 None
+urllib3.connectionpool - DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/search?jql=project+%3D+COG+AND+cf%5B12380%5D+in+cascadeOption%2814037%29+AND+created+%3E%3D+-24d+AND+assignee+in+%28EMPTY%29+ORDER+BY+key+ASC&startAt=0&validateQuery=True&maxResults=100 HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/search?jql=project+%3D+COG+AND+cf%5B12380%5D+in+cascadeOption%2814037%29+AND+created+%3E%3D+-24d+AND+assignee+in+%28EMPTY%29+ORDER+BY+key+ASC&startAt=0&validateQuery=True&maxResults=100 HTTP/1.1" 200 None
+root - INFO - Tool run by wikoeste
+Tool run by wikoeste
+root - WARNING - No valid Tickets
+No valid Tickets
+2021-10-26 12:54:15,091:urllib3.connectionpool:DEBUG - Starting new HTTPS connection (1): jira.sco.cisco.com:443
+Starting new HTTPS connection (1): jira.sco.cisco.com:443
+2021-10-26 12:54:15,895:urllib3.connectionpool:DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/serverInfo HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/serverInfo HTTP/1.1" 200 None
+2021-10-26 12:54:16,559:urllib3.connectionpool:DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/field HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/field HTTP/1.1" 200 None
+2021-10-26 12:54:17,468:urllib3.connectionpool:DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/search?jql=project+%3D+COG+AND+cf%5B12380%5D+in+cascadeOption%2814037%29+AND+created+%3E%3D+-24d+AND+assignee+in+%28EMPTY%29+ORDER+BY+key+ASC&startAt=0&validateQuery=True&maxResults=100 HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/search?jql=project+%3D+COG+AND+cf%5B12380%5D+in+cascadeOption%2814037%29+AND+created+%3E%3D+-24d+AND+assignee+in+%28EMPTY%29+ORDER+BY+key+ASC&startAt=0&validateQuery=True&maxResults=100 HTTP/1.1" 200 None
+2021-10-26 12:54:17,469:root:INFO - Tool run by wikoeste
+Tool run by wikoeste
+2021-10-26 12:54:17,469:root:WARNING - No valid Tickets
+No valid Tickets
+2021-10-26 12:54:41,889:urllib3.connectionpool:DEBUG - Starting new HTTPS connection (1): jira.sco.cisco.com:443
+Starting new HTTPS connection (1): jira.sco.cisco.com:443
+2021-10-26 12:54:42,681:urllib3.connectionpool:DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/serverInfo HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/serverInfo HTTP/1.1" 200 None
+2021-10-26 12:54:43,190:urllib3.connectionpool:DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/field HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/field HTTP/1.1" 200 None
+2021-10-26 12:54:44,099:urllib3.connectionpool:DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/search?jql=project+%3D+COG+AND+cf%5B12380%5D+in+cascadeOption%2814037%29+AND+created+%3E%3D+-24d+AND+assignee+in+%28EMPTY%29+ORDER+BY+key+ASC&startAt=0&validateQuery=True&maxResults=100 HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/search?jql=project+%3D+COG+AND+cf%5B12380%5D+in+cascadeOption%2814037%29+AND+created+%3E%3D+-24d+AND+assignee+in+%28EMPTY%29+ORDER+BY+key+ASC&startAt=0&validateQuery=True&maxResults=100 HTTP/1.1" 200 None
+2021-10-26 12:54:44,100:root:INFO - Tool run by wikoeste
+Tool run by wikoeste
+2021-10-26 12:55:10,958:urllib3.connectionpool:DEBUG - Starting new HTTPS connection (1): jira.sco.cisco.com:443
+Starting new HTTPS connection (1): jira.sco.cisco.com:443
+2021-10-26 12:55:11,954:urllib3.connectionpool:DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/serverInfo HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/serverInfo HTTP/1.1" 200 None
+2021-10-26 12:55:12,568:urllib3.connectionpool:DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/field HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/field HTTP/1.1" 200 None
+2021-10-26 12:55:13,490:urllib3.connectionpool:DEBUG - https://jira.sco.cisco.com:443 "GET /rest/api/2/search?jql=project+%3D+COG+AND+cf%5B12380%5D+in+cascadeOption%2814037%29+AND+created+%3E%3D+-24d+AND+assignee+in+%28EMPTY%29+ORDER+BY+key+ASC&startAt=0&validateQuery=True&maxResults=100 HTTP/1.1" 200 None
+https://jira.sco.cisco.com:443 "GET /rest/api/2/search?jql=project+%3D+COG+AND+cf%5B12380%5D+in+cascadeOption%2814037%29+AND+created+%3E%3D+-24d+AND+assignee+in+%28EMPTY%29+ORDER+BY+key+ASC&startAt=0&validateQuery=True&maxResults=100 HTTP/1.1" 200 None
+2021-10-26 12:55:13,491:root:INFO - Tool run by wikoeste
+Tool run by wikoeste
+2021-10-26 12:55:13,491:root:WARNING - No valid Tickets
+No valid Tickets
