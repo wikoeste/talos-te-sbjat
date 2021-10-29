@@ -22,36 +22,49 @@ def comment(ticket,data,rules,scr,ip):
     # public comments
     if float(scr) >= -1.9:
         jira.add_comment(ticket, ip +": " + settings.boilerplates["recovered"])
-        #resolveclose(ticket)
+        return 1
     elif "sbl" or "pbl" in rules:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
-        #resolveclose(ticket)
+        return 1
     elif "Ia" and "Dh" in rules:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
-        #resolveclose(ticket)
+        return 1
     elif "Gry" in rules:
         jira.add_comment(ticket,ip +": " +  settings.boilerplates["grey"])
+        return 2
     elif float(scr) <= -2.0:
         jira.add_comment(ticket,"Your IP, {}".format(ip)+ "has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules))
-        #resolveclose(ticket)
+        return 2
     else:
         jira.add_comment(ticket, scr +","+rules, visibility={'type': 'role', 'value': 'Project Developer'}) # private comment
-        jira.transition_issue(issue, '711', fields={'assignee': {'name': 'wikoeste'}})
+        return 2
 
-
-def resolveclose(ticket):
+def resolveclose(ticket,flag):
     options = {"server": "https://jira.sco.cisco.com"}
     jira = JIRA(basic_auth=('wikoeste', 'S0urc3f1r3!10'), options=options)
-    # available transitions
     issue = jira.issue(ticket)
-    #print(issue.fields)
-    # print(issue.fields.resolution)
     transitions = jira.transitions(issue)
-    #print([(t['id'], t['name']) for t in transitions])
-    # Resolve the issue and set resolution to close
-    jira.transition_issue(issue, '5', fields={'assignee': {'name': 'wikoeste'}, 'resolution': {'id': '1'}})
-    #resolutions ids
-    # 1 = Fixed
-    # 2 = wont fix
-    # 3 =
-    # 4 =
+    print([(t['id'], t['name']) for t in transitions])
+    status = issue.fields.status
+    print(status)
+    # Resolve the issue and set resolution to close is status is not cog investigating
+    if flag == 1 and 'COG' in str(status):
+        jira.transition_issue(issue, '741', resolution={'id': '4'})
+    elif flag == 1 and 'Pending' in str(status):
+            jira.transition_issue(issue, '741', resolution={'id': '1'})
+    elif flag == 1:
+        jira.transition_issue(issue, '5', resolution={'id': '1'})
+    else:
+        jira.transition_issue(issue, '721')
+'''
+resolutions ids
+# 1 = Fixed
+# 2 = wont fix
+# 3 = duplicate
+# 4 =
+#
+jira issue Status options
+[('5', 'Resolve Issue'), ('2', 'Close Issue'), ('721', 'COG Investigating')]
+
+721 -> [('731', 'Stop Progress'), ('741', 'Resolve Issue'), ('751', 'Close Issue'), ('761', 'Pending Reporter'), ('791', 'Pending Other')]
+'''

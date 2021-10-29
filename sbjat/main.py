@@ -31,15 +31,12 @@ def main():
     print("=====\n\n")
     for i in clist:
         # take ownership, parse for data, analyze data, return and post analysis results in private comment, post public boiler plate
-        # transition case to resolved fixed
         postjira.assign(i)
         issue = jira.issue(i)
         cmts = issue.fields.comment.comments # get comments id at case creatuion
         for c in cmts:
             cmtips.append(getsbrs.ipfromcomments(c.body)) # search for ips and cidrs in the comment messages bodies and store in a list for each ticket
         getsbrs.ticketdata(i) # get the ticket data for each cog case located
-    for i in clist:
-        postjira.resolveclose(i) # move the ticket to resolved closed
     if len(clist) == 0:
         logdata.logger.warning("No valid Tickets")
 if __name__ == '__main__':

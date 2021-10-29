@@ -39,40 +39,37 @@ def ticketdata(ticket):
         # Check for ip in comments
         ips = list(set(extractedips)) # remove duplicate ips
         #print(ips)
+        flag = 0
         if len(ips) > 0:
             for i in ips:
                 scr, rules, pbl, ip, date = score(i)  # send the ip list to get the SBRS score,rulehits, and possible pbl, of each ip from the ticket summary or description
-                data = [
-                    ["SBRS Jira Ticket Date at Creation"],
-                    ["Ticket: {}".format(ticket)],
-                    ["Desc: {}".format(frmtdesc)],
-                    ["Summary: {}".format(frmtsmry)],
-                    ["IP Addresses Submitted: {}".format(ips)],
-                    ["Date Opened: {}".format(created)],
-                    ["Date Closed: {}".format(resolved)],
-                    ["\n===RealTime Threat Analysis==="],
-                    ["Date: {}".format(date)],
-                    ["Score: {}".format(scr)],
-                    ["Rule HIts: {}".format(rules)],
-                    ["Public Block List (pbl): {}".format(pbl)],
-                    ["IP Analyzed: {}".format(i)],
-                    ["Ticket: {}".format(ticket)],
-                ]
-                tbl = AsciiTable(data, "Seek and Destroy Results")
-                #print(tbl.table)
-                logdata.logger.info(date,tbl.table)
-                # post comment to jira and update ticket fields, resolve
-                postjira.comment(ticket,data,rules,scr,ips[-1])
+                data = "==SBRS Jira Ticket Date at Creation==\n \
+                    Ticket: "+str(ticket)+"\n \
+                    Desc: "+ str(frmtdesc)+"\n \
+                    Summary: "+str(frmtsmry)+"\n \
+                    IP Addresses Submitted: {}".format(ips)+"\n \
+                    Date Opened: {}".format(created)+"\n \
+                    Date Closed: {}".format(resolved)+"\n \
+                    \n===RealTime Threat Analysis===\n \
+                    IP Analyzed: {}".format(i) + "\n \
+                    Date: {}".format(date)+"\n \
+                    Score: {}".format(scr)+"\n \
+                    Rule Hits: {}".format(rules)+"\n \
+                    Public Block List: {}".format(pbl)
+                logdata.logger.info(str(date)+":"+str(data))
+                # post comment to jira and update ticket fields
+                flag = postjira.comment(ticket,data,rules,scr,ips[-1])
+            postjira.resolveclose(ticket, flag)  # update resolution
         if re.search(r'\/.{2}',smry) is True: # this is a cidr entry in summary field
             cidrscore(match,ticket)
         elif re.search(r'\/.{2}',desc) is True: # this is a cidr entry in description
             cidrscore(match,ticket)
         else:
-            tbl = AsciiTable([[ticket],["No valid IPv4 Addresses"]])
-            logdata.logger.info(date,tbl.table)
+            err = "No valid IPv4 Addresses"
+            logdata.logger.info(str(date)+":"+str(err))
     else:
-        tbl = AsciiTable([["HTTP ERROR: {}".format(response.status_code)]],[ticket], "Jira API Search")
-        logdata.logger.info(date,tbl.table)
+        err = "HTTP ERROR: {}".format(response.status_code),ticket + " Jira API Search"
+        logdata.logger.info(str(date)+":"+str(err))
 
 def ipfromcomments(comment):
     cmtips = []
@@ -90,20 +87,18 @@ def cidrscore(ips,ticket):
         scr,rules,pbl,ip,date = score(i)
         if float(scr) < -2.0:
             # Create SBRS table
-            analysis = [
-                ["===RealTimeThreat Analysis==="],
-                ["Date: {}".format(date)],
-                ["Ticket: {}".format(ticket)],
-                ["IP: {}".format(ip)],
-                ["Score {}".format(scr)],
-                ["Rules: {}".format(rules)],
-                ["Public Block List (pbl): {}".format(pbl)],
-            ]
-            sbrsTable = AsciiTable(tbldata, 'SBRS Data')
-            #print(sbrsTable.table)
+            analysis = "\n===RealTimeThreat Analysis===\n \
+                Date: {}".format(date)+"\n \
+                Ticket: {}".format(ticket)+"\n \
+                IP: {}".format(ip)+"\n \
+                Score {}".format(scr)+"\n \
+                Rule Hits: {}".format(rules)+"\n \
+                Public Block List: {}".format(pbl)
             #post comment to jira and update ticket fields, resolve
             postjira.comment(ticket,analysis,rules,scr,i)
-            logdata.logger.info(tbl.table)
+            logdata.logger.info(str(analysis))
+    #do not close case review the issue first
+    jira.transition_issue(issue, '711', fields={'assignee': {'name': 'wikoeste'}})
 
 def score(ip):
     date = time.strftime("%Y-%m-%d %H:%M")
