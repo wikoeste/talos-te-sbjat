@@ -32,7 +32,7 @@ def comment(ticket,data,rules,scr,ip):
     elif float(scr) <= -2.0:
         jira.add_comment(ticket,"Your IP, {}".format(ip)+ "has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules))
         return 2
-    elif "sbl" or "pbl" in rules:
+    elif "Sbl" or "Pbl" in rules:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
         return 1
     else:
