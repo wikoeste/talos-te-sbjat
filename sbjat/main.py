@@ -1,11 +1,11 @@
 # Senderbase Jira Automation Tool
 # Tool to read, analyze, respnde, and resolve jira sbrs case types
 # Author: wikoeste
-from common import settings
+from sbjat.common import settings
 settings.init()
-from common import getsbrs
-from common import postjira
-from common import logdata
+from sbjat.common import getsbrs
+from sbjat.common import postjira
+from sbjat.common import logdata
 from jira import JIRA
 import re
 

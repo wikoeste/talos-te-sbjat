@@ -1,5 +1,5 @@
 # records a transaction log regarding for the tickets found and automated action logged
-from common import settings
+from sbjat.common import settings
 import logging, os    # first of all import the module
 
 #logging.basicConfig(filename='sbjat_sbrs_audit.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')

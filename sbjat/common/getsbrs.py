@@ -1,6 +1,6 @@
-from common import settings
-from common import postjira
-from common import logdata
+from sbjat.common import settings
+from sbjat.common import postjira
+from sbjat.common import logdata
 from netaddr import IPNetwork
 import requests,subprocess,shlex,re,time,json
 from ipaddress import ip_address
