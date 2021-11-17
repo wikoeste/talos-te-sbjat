@@ -4,11 +4,13 @@ from jira import JIRA
 import re,requests
 
 def assign(ticket):
-    options = {"server": "https://jira.sco.cisco.com"}
-    jira = JIRA(basic_auth=('wikoeste', 'S0urc3f1r3!10'), options=options)
-    issue = jira.issue(ticket)
+    options     = {"server": "https://jira.sco.cisco.com"}
+    jira        = JIRA(basic_auth=('wikoeste', 'S0urc3f1r3!10'), options=options)
+    issue       = jira.issue(ticket)
     jira.assign_issue(ticket, 'wikoeste')
-    issue.update(priority={'name': 'P4'}) # set to a p4
+    priority    = issue.fields.priority.name
+    # issue.update(priority={'name': 'P4'}) # set to a p4
+
 
 def comment(ticket,data,rules,scr,ip):
     #ticket = 'COG-53664'
@@ -24,17 +26,21 @@ def comment(ticket,data,rules,scr,ip):
         jira.add_comment(ticket, ip +": " + settings.boilerplates["recovered"])
         return 1
     elif "IaM" and "DhM" in rules:
+        print(True)
         jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
         return 1
     elif "Gry" in rules:
         jira.add_comment(ticket,ip +": " +  settings.boilerplates["grey"])
         return 2
-    elif float(scr) <= -2.0:
-        jira.add_comment(ticket,"Your IP, {}".format(ip)+ "has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules))
-        return 2
-    elif "Sbl" or "Pbl" in rules:
+    elif "Sbl" in rules:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
         return 1
+    elif "Pbl" in rules:
+        jira.add_comment(ticket, ip + ": " + settings.boilerplates["spamhaus"])
+        return 1
+    elif float(scr) <= -2.0:
+        jira.add_comment(ticket,"Your IP, {}".format(ip)+ " has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules))
+        return 2
     else:
         jira.add_comment(ticket, scr +","+rules, visibility={'type': 'role', 'value': 'Project Developer'}) # private comment
         return 2
@@ -44,7 +50,7 @@ def resolveclose(ticket,flag):
     jira = JIRA(basic_auth=('wikoeste', 'S0urc3f1r3!10'), options=options)
     issue = jira.issue(ticket)
     transitions = jira.transitions(issue)
-    #print([(t['id'], t['name']) for t in transitions])
+    print([(t['id'], t['name']) for t in transitions])
     status = issue.fields.status
     #print(status)
     # Resolve the issue and set resolution to close is status is not cog investigating
