@@ -4,6 +4,22 @@
 
 # Release Notes
 
+
+Not Released
+0.8
+updated postjira to new password 
+0.7
+fixed private comment error
+added cp1 boilerplate
+removed errors with jira transition of the case status
+removed any auto resoltuion of the ticket
+0.6
+Bug fixes
+fixed error with Unknown score postjira.py", line 25, in comment ValueError: could not convert string to float: 'Unknown'
+0.5
 '''
-0.1
+Bug Fixes:
+fixed issue where we print the incorrect ip due to the post jira call being outside the loop
+fixed message view from public to private for comments where human interaction is needed
+fixed log file creation to be in the user home dir
 '''

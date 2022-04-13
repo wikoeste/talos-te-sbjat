@@ -12,6 +12,8 @@ def init():
     global wbrs
     global wbrs2
     global boilerplates
+    global cecpw
+    global version
 
 def getKey(keyname):
     #take the search keyname and return the appropriate api key
@@ -37,7 +39,8 @@ wbrsKey      = '2d7ca813282559235f8fe3eb776eb0e5557161ea36a22faa'
 sherlock     = 'https://sherlock.ironport.com/webapi/'
 wbrs         = 'https://prod-wbrsruleapi-app2.sv4.ironport.com/'
 wbrs2        = 'https://prod-wbrsruleapi-vip.sv4.ironport.com/'
-
+cecpw        = "SAM@dm1n"
+version      = '0.8'
 #SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \
                 In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week \
@@ -74,7 +77,12 @@ boilerplates = {"general":"If the spam problem is fixed as you believe it to be,
                 to invalid email addresses; A server, user computer, router or switch on your network may be compromised by a trojan spam virus;\
                 There is an open port 25 through which a spammer may be gaining access and sending out spam; One of your users is sending spam \
                 through the IP. Compromised hosting or mail accounts, which are then used to authenticate and send through other ports.\
-                In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week to improve."
+                In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week to improve.",
+                
+                "cp1":"The IP address or addresses have a poor Talos Intelligence email reputation because the IP is helo-ing with a generic host name string. \
+                This is a known behavior pattern with BOT infected systems. The IP should be HELO-ing as the sending domain and the PTR should also point to \
+                the hosted domain for proper SMTP authentication; HELO should match PTR and sender domain should match Helo string."
+
                 }
 
 # access token git write: XsG1NRAmCzYxYcMWC73g

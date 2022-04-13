@@ -13,9 +13,9 @@ def ticketdata(ticket):
     jiraAPI = "https://jira.sco.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
     fields = "&fields=description,summary,created,assignee,reporter,resolutiondate,customfield_12385"
     headers = {'Content-type': 'application/json'}
-    response = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', 'S0urc3f1r3!10'), verify=False)
+    response = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
     tbl = AsciiTable([["NoData"], ["Jira API Search"]])
-    data,rules,scr, = (None,None,None)
+    data,rules,scr,date = (None,None,None,None)
     if response.status_code == 200:
         jsondict = response.json()
         #print('jira lql search for cog ticket', json.dumps(jsondict, indent=2))
@@ -56,10 +56,10 @@ def ticketdata(ticket):
                     Score: {}".format(scr)+"\n \
                     Rule Hits: {}".format(rules)+"\n \
                     Public Block List: {}".format(pbl)
-                logdata.logger.info(str(date)+":"+str(data))
+                #logdata.logger.info(str(date)+":"+str(data))
                 # post comment to jira and update ticket fields
                 flag = postjira.comment(ticket,data,rules,scr,ips[-1])
-            postjira.resolveclose(ticket, flag)  # update resolution
+                #postjira.resolveclose(ticket, flag)  # update resolution for each ip
         if re.search(r'\/.{2}',smry) is True: # this is a cidr entry in summary field
             cidrscore(match,ticket)
         elif re.search(r'\/.{2}',desc) is True: # this is a cidr entry in description
@@ -98,7 +98,7 @@ def cidrscore(ips,ticket):
             postjira.comment(ticket,analysis,rules,scr,i)
             logdata.logger.info(str(analysis))
     #do not close case review the issue first
-    jira.transition_issue(issue, '711', fields={'assignee': {'name': 'wikoeste'}})
+    #jira.transition_issue(issue, '711', fields={'assignee': {'name': 'wikoeste'}})
 
 def score(ip):
     date = time.strftime("%Y-%m-%d %H:%M")
@@ -108,12 +108,12 @@ def score(ip):
     digcmd = 'dig +noall +answer TXT ' + sbrsurl
     proc = subprocess.Popen(shlex.split(digcmd), stdout=subprocess.PIPE)
     out, err = proc.communicate()
+    score = 0.0
+    rules, pblname = ("--", "--")
     # Parse the returned dig data to dispaly the rules, and scores.
     split = out.split()
     if len(split) == 0:
         # return empty results
-        score = "Unknown"
-        rules,pblname = ("--","--")
         return score,rules,pbl,ip,date
     else:
         data = split[4]
@@ -127,25 +127,11 @@ def score(ip):
         rules = res[5]
         rules = ' '.join([rules[i:i + 3] for i in range(0, len(rules), 3)])
         results = "None"
-        ''''# Create SBRS table
-        tbldata = [
-            ["Date: {}".format(date)],
-            ["IP: {}".format(ip)],
-            ["Score {}".format(score)],
-            ["Rules: {}".format(rules)],
-            ["Block List: {}".format(pblname)],
-            ["Results: {}".format(results)],
-        ]
-        sbrsTable = AsciiTable(tbldata, 'SBRS Data')
-        print(sbrsTable.table)
-        print()
-        '''
         return score,rules,pblname,ip,date
-# check the public blacklists and return the results
-def pbl(revip):
-    blacklists = ("bl.spamcop.net", "cbl.abuseat.org", "pbl.spamhaus.org", "sbl.spamhaus.org", "xbl.spamhaus.org",
-                      "dnsbl.invaluement.com");
-    # Nslookup to check the Black Lists
+
+def pbl(revip): # check the public blacklists and return the results
+    blacklists = ("bl.spamcop.net", "cbl.abuseat.org", "pbl.spamhaus.org", "sbl.spamhaus.org", "xbl.spamhaus.org", \
+                  "dnsbl.invaluement.com")
     res = ''
     for bl in blacklists:
         digcmd = 'dig +short ' + str(revip) + '.' + str(bl)
