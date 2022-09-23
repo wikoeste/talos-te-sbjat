@@ -58,7 +58,7 @@ def ticketdata(ticket):
                     Public Block List: {}".format(pbl)
                 #logdata.logger.info(str(date)+":"+str(data))
                 # post comment to jira and update ticket fields
-                flag = postjira.comment(ticket,data,rules,scr,ips[-1])
+                flag = postjira.comment(ticket,data,rules,scr,i)
                 #postjira.resolveclose(ticket, flag)  # update resolution for each ip
         if re.search(r'\/.{2}',smry) is True: # this is a cidr entry in summary field
             cidrscore(match,ticket)

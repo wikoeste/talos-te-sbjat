@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='te-sbjat',
-    version='0.8',
+    version='1.0',
     packages=["sbjat", "sbjat.common"],
     description='TE - Senderbase Jira Automation Tool',
     author='Will Koester',

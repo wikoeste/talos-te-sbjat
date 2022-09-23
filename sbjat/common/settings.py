@@ -39,8 +39,8 @@ wbrsKey      = '2d7ca813282559235f8fe3eb776eb0e5557161ea36a22faa'
 sherlock     = 'https://sherlock.ironport.com/webapi/'
 wbrs         = 'https://prod-wbrsruleapi-app2.sv4.ironport.com/'
 wbrs2        = 'https://prod-wbrsruleapi-vip.sv4.ironport.com/'
-cecpw        = "SAM@dm1n"
-version      = '0.8'
+cecpw        = "the$AM@dm1n^"
+version      = '1.0'
 #SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \
                 In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week \

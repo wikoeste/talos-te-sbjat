@@ -4,9 +4,11 @@
 
 # Release Notes
 
+1.0
+fixed ip data in jira comment to be the correct ip if there are multiple ips
 
 Not Released
-0.8
+0.8/0.9
 updated postjira to new password 
 0.7
 fixed private comment error
