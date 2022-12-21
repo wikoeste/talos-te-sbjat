@@ -23,7 +23,6 @@ def comment(ticket,data,rules,scr,ip):
         jira.add_comment(ticket, ip +": " + settings.boilerplates["recovered"])
         return 1
     elif "IaM" and "DhM" in rules or "RS" and "Rh" in rules:
-        print(True)
         jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
         return 1
     elif "Gry" in rules:
@@ -33,20 +32,36 @@ def comment(ticket,data,rules,scr,ip):
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
         return 1
     elif "Ce" or "Ve" in rules:
-        jira.add_comment(ticket, ip + ": " + "IP listed in http://enemieslist.com/classifications/")
-        return 1
+        # private comment
+        jira.add_comment(ticket, ip + ": " + "IP listed in http://enemieslist.com/classifications/",
+            visibility={'type': 'role', 'value': 'Project Developer'})
+        return 2
     elif "Cp1" or "Cp2" or "Vp1" or "Vp2" in rules:
         jira.add_comment(ticket, ip + ": " + settings.boilerplates["cp1"])
         return 1
     elif "Ivn" or "Ivm":
-        jira.add_comment(ticket, ip + ": " + "listed on Invalument: https://www.invaluement.com/")
-        return 1
+        # private comment
+        jira.add_comment(ticket, ip + ": " + "listed on Invalument: https://www.invaluement.com/",
+            visibility={'type': 'role', 'value': 'Project Developer'})
+        return 2
+    elif "Vu" or "Cu" in rules:
+        # private comment
+        jira.add_comment(ticket, ip + ": " + "a domain associated with this IP are listed in the URIDB feed.",
+            visibility={'type': 'role', 'value': 'Project Developer'})
+        return 2
+    elif "Rtm" in rules:
+        # private comment
+        jira.add_comment(ticket, ip + ": " + "is blocked by a Reptool entry",
+            visibility = {'type': 'role', 'value': 'Project Developer'})
+        return 2
     elif float(scr) <= -2.0:
+        # private comment
         jira.add_comment(ticket,"Your IP, {}".format(ip)+ " has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules),
-                visibility = {'type': 'role', 'value': 'Project Developer'}) # private comment
+            visibility = {'type': 'role', 'value': 'Project Developer'})
         return 2
     else:
-        jira.add_comment(ticket, scr +","+rules, visibility={'type': 'role', 'value': 'Project Developer'}) # private comment
+        # private comment
+        jira.add_comment(ticket, scr +","+rules, visibility={'type': 'role', 'value': 'Project Developer'})
         return 2
 
 def resolveclose(ticket,flag):
