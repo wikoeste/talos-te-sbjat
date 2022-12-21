@@ -1,19 +1,8 @@
-import getpass # used to get ones username
-import re # regex
-import os.path # check for the profile script under home or users
-import queue
+import getpass,re,os.path,queue
 # Global List
 def init():
-    global uname
-    global que
-    global sherlock
-    global sherlockKey
-    global wbrsKey
-    global wbrs
-    global wbrs2
-    global boilerplates
-    global cecpw
-    global version
+    global uname,que,sherlock,sherlockKey,wbrsKey
+    global wbrs,wbrs2,boilerplates,cecpw,version
 
 def getKey(keyname):
     #take the search keyname and return the appropriate api key
@@ -30,7 +19,9 @@ def getKey(keyname):
             if keyname.upper() in l:
                 match = l
     key = re.sub(r'.*=','',match)
+    key = re.sub(r'"', '', key)
     return key
+
 #Get user creds and API Keys at start
 que = queue.Queue()
 uname        = getpass.getuser()
@@ -40,7 +31,7 @@ sherlock     = 'https://sherlock.ironport.com/webapi/'
 wbrs         = 'https://prod-wbrsruleapi-app2.sv4.ironport.com/'
 wbrs2        = 'https://prod-wbrsruleapi-vip.sv4.ironport.com/'
 cecpw        = "the$AM@dm1n^"
-version      = '1.0'
+version      = '1.1'
 #SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \
                 In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week \
@@ -84,5 +75,4 @@ boilerplates = {"general":"If the spam problem is fixed as you believe it to be,
                 the hosted domain for proper SMTP authentication; HELO should match PTR and sender domain should match Helo string."
 
                 }
-
 # access token git write: XsG1NRAmCzYxYcMWC73g

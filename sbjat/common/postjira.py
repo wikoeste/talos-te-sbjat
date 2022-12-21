@@ -1,23 +1,20 @@
 from sbjat.common import settings
-from sbjat.common import getsbrs
 from jira import JIRA
-import re,requests
 
 def assign(ticket):
-    options     = {"server": "https://jira.sco.cisco.com"}
+    options     = {"server": "https://jira.talos.cisco.com"}
     jira        = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
-    issue       = jira.issue(ticket)
+    #issue       = jira.issue(ticket)
     jira.assign_issue(ticket, 'wikoeste')
-    #priority    = issue.fields.priority.name
+    # priority    = issue.fields.priority.name
     # issue.update(priority={'name': 'P4'}) # set to a p4
-
 
 def comment(ticket,data,rules,scr,ip):
     #ticket = 'COG-53664'
-    options = {"server": "https://jira.sco.cisco.com"}
+    options = {"server": "https://jira.talos.cisco.com"}
     jira = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
-    comment = jira.add_comment(ticket, str(data), visibility={'type': 'role', 'value': 'Project Developer'})  # private comment
-    # comment.delete()
+    # private comment
+    comment = jira.add_comment(ticket, str(data), visibility={'type': 'role', 'value': 'Project Developer'})
     issue = jira.issue(ticket)
     issue.update(fields={'customfield_12385':rules})  # write the rule hits in COG-Hits in jira
     #return boiler plate based on score
@@ -25,24 +22,27 @@ def comment(ticket,data,rules,scr,ip):
     if float(scr) >= -1.9:
         jira.add_comment(ticket, ip +": " + settings.boilerplates["recovered"])
         return 1
-    elif "IaM" and "DhM" in rules:
+    elif "IaM" and "DhM" in rules or "RS" and "Rh" in rules:
         print(True)
         jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
         return 1
     elif "Gry" in rules:
         jira.add_comment(ticket,ip +": " +  settings.boilerplates["grey"])
         return 2
-    elif "Sbl" in rules:
+    elif "Cbl" or "Pbl" or "Sbl" or "Css" in rules:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
         return 1
-    elif "Pbl" in rules:
-        jira.add_comment(ticket, ip + ": " + settings.boilerplates["spamhaus"])
+    elif "Ce" or "Ve" in rules:
+        jira.add_comment(ticket, ip + ": " + "IP listed in http://enemieslist.com/classifications/")
         return 1
-    elif "Cp1" in rules :
+    elif "Cp1" or "Cp2" or "Vp1" or "Vp2" in rules:
         jira.add_comment(ticket, ip + ": " + settings.boilerplates["cp1"])
         return 1
+    elif "Ivn" or "Ivm":
+        jira.add_comment(ticket, ip + ": " + "listed on Invalument: https://www.invaluement.com/")
+        return 1
     elif float(scr) <= -2.0:
-        jira.add_comment(ticket,"Your IP, {}".format(ip)+ " has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules), \
+        jira.add_comment(ticket,"Your IP, {}".format(ip)+ " has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules),
                 visibility = {'type': 'role', 'value': 'Project Developer'}) # private comment
         return 2
     else:
@@ -50,7 +50,7 @@ def comment(ticket,data,rules,scr,ip):
         return 2
 
 def resolveclose(ticket,flag):
-    options = {"server": "https://jira.sco.cisco.com"}
+    options = {"server": "https://jira.talos.cisco.com"}
     jira = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
     issue = jira.issue(ticket)
     transitions = jira.transitions(issue)
@@ -68,7 +68,7 @@ def resolveclose(ticket,flag):
     else:
         jira.transition_issue(issue, '721')
 '''
-resolutions ids40335
+resolution ids
 # 1 = Fixed
 # 2 = wont fix
 # 3 = duplicate
@@ -76,6 +76,5 @@ resolutions ids40335
 #
 jira issue Status options
 [('5', 'Resolve Issue'), ('2', 'Close Issue'), ('721', 'COG Investigating')]
-
 721 -> [('731', 'Stop Progress'), ('741', 'Resolve Issue'), ('751', 'Close Issue'), ('761', 'Pending Reporter'), ('791', 'Pending Other')]
 '''

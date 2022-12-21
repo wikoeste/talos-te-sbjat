@@ -2,9 +2,9 @@ from setuptools import setup
 
 setup(
     name='te-sbjat',
-    version='1.0',
+    version='1.1',
     packages=["sbjat", "sbjat.common"],
-    description='TE - Senderbase Jira Automation Tool',
+    description='Senderbase Jira Automation Tool',
     author='Will Koester',
     author_email='wikoeste@cisco.com',
     url='',

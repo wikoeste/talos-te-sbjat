@@ -2,20 +2,17 @@ from sbjat.common import settings
 from sbjat.common import postjira
 from sbjat.common import logdata
 from netaddr import IPNetwork
-import requests,subprocess,shlex,re,time,json
+import requests,subprocess,shlex,re,time
 from ipaddress import ip_address
-from jira import JIRA
-from terminaltables import AsciiTable
 requests.packages.urllib3.disable_warnings()
 
 def ticketdata(ticket):
-    ticketurl = "https://jira.sco.cisco.com/browse/{}".format(ticket)
-    jiraAPI = "https://jira.sco.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
-    fields = "&fields=description,summary,created,assignee,reporter,resolutiondate,customfield_12385"
-    headers = {'Content-type': 'application/json'}
-    response = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
-    tbl = AsciiTable([["NoData"], ["Jira API Search"]])
-    data,rules,scr,date = (None,None,None,None)
+    ticketurl   = "https://jira.talos.cisco.com/browse/{}".format(ticket)
+    jiraAPI     = "https://jira.talos.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
+    fields      = "&fields=description,summary,created,assignee,reporter,resolutiondate,customfield_12385"
+    headers     = {'Content-type': 'application/json'}
+    response    = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
+    data,rules,scr,date,match = (None,None,None,None,None)
     if response.status_code == 200:
         jsondict = response.json()
         #print('jira lql search for cog ticket', json.dumps(jsondict, indent=2))
@@ -36,9 +33,7 @@ def ticketdata(ticket):
         # Check for any IPs in the desc
         for match in re.findall(ipPattern, desc):
             extractedips.append(match)
-        # Check for ip in comments
         ips = list(set(extractedips)) # remove duplicate ips
-        #print(ips)
         flag = 0
         if len(ips) > 0:
             for i in ips:
@@ -56,13 +51,13 @@ def ticketdata(ticket):
                     Score: {}".format(scr)+"\n \
                     Rule Hits: {}".format(rules)+"\n \
                     Public Block List: {}".format(pbl)
-                #logdata.logger.info(str(date)+":"+str(data))
+                logdata.logger.info(str(date)+":"+str(data))
                 # post comment to jira and update ticket fields
                 flag = postjira.comment(ticket,data,rules,scr,i)
                 #postjira.resolveclose(ticket, flag)  # update resolution for each ip
-        if re.search(r'\/.{2}',smry) is True: # this is a cidr entry in summary field
+        if re.search(r'/.{2}',smry) is True: # this is a cidr entry in summary field
             cidrscore(match,ticket)
-        elif re.search(r'\/.{2}',desc) is True: # this is a cidr entry in description
+        elif re.search(r'/.{2}',desc) is True: # this is a cidr entry in description
             cidrscore(match,ticket)
         else:
             err = "No valid IPv4 Addresses"
@@ -71,17 +66,9 @@ def ticketdata(ticket):
         err = "HTTP ERROR: {}".format(response.status_code),ticket + " Jira API Search"
         logdata.logger.info(str(date)+":"+str(err))
 
-def ipfromcomments(comment):
-    cmtips = []
-    # regex to find ipv4 addresses in the case comments
-    ipPattern = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
-    # Check for any IPs in the summary
-    for match in re.findall(ipPattern, str(comment)):
-        cmtips.append(match)
-    return cmtips
-
 def cidrscore(ips,ticket):
-    print("Only SBRS scores with a Poor Reputation will print for any CIDR!")
+    print("Only IP addresses with a Poor/malicious,"
+          "SBRS score will print for any CIDR!\n")
     for i in IPNetwork(ips):
         # get sbrs score and if -2.0 or more get sbrs data for that IP only
         scr,rules,pbl,ip,date = score(i)
@@ -130,8 +117,8 @@ def score(ip):
         return score,rules,pblname,ip,date
 
 def pbl(revip): # check the public blacklists and return the results
-    blacklists = ("bl.spamcop.net", "cbl.abuseat.org", "pbl.spamhaus.org", "sbl.spamhaus.org", "xbl.spamhaus.org", \
-                  "dnsbl.invaluement.com")
+    blacklists = ("bl.spamcop.net", "cbl.abuseat.org", "pbl.spamhaus.org",
+                  "sbl.spamhaus.org", "xbl.spamhaus.org","dnsbl.invaluement.com")
     res = ''
     for bl in blacklists:
         digcmd = 'dig +short ' + str(revip) + '.' + str(bl)

@@ -3,6 +3,10 @@
 # Author: wikoeste
 
 # Release Notes
+1.1
+updated api key error found on test and prod tepot hosts
+changed from jira.sco to jira.talos for 01/03/2023 queue change
+updated the boiler plates for ipedia changes
 
 1.0
 fixed ip data in jira comment to be the correct ip if there are multiple ips
