@@ -11,7 +11,7 @@ def assign(ticket):
 
 def comment(ticket,data,rules,scr,ip):
     #ticket = 'COG-53664'
-    ticket  = 'COG-62858'
+    #ticket  = 'COG-62858'
     options = {"server": "https://jira.talos.cisco.com"}
     jira = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
     # private comment
