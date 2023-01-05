@@ -16,7 +16,7 @@ def comment(ticket,data,rules,scr,ip):
     # private comment
     comment = jira.add_comment(ticket, str(data), visibility={'type': 'role', 'value': 'Project Developer'})
     issue = jira.issue(ticket)
-    issue.update(fields={'customfield_12385':rules})  # write the rule hits in COG-Hits in jira
+    #issue.update(fields={'customfield_12385':rules})  # write the rule hits in COG-Hits in jira
     #return boiler plate based on score
     # public comments
     if float(scr) >= -1.9:
