@@ -11,6 +11,7 @@ def assign(ticket):
 
 def comment(ticket,data,rules,scr,ip):
     #ticket = 'COG-53664'
+    ticket  = 'COG-62858'
     options = {"server": "https://jira.talos.cisco.com"}
     jira = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
     # private comment
@@ -78,7 +79,6 @@ def resolveclose(ticket,flag):
     elif flag == 1 and 'Pending' in str(status):
             jira.transition_issue(issue, '741', resolution={'id': '1'})
     elif flag == 1:
-        #jira.transition_issue(issue, '5', resolution={'id': '1'})
         jira.transition_issue(issue, '721')
     else:
         jira.transition_issue(issue, '721')

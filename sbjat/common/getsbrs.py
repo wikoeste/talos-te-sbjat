@@ -9,26 +9,28 @@ requests.packages.urllib3.disable_warnings()
 def ticketdata(ticket):
     ticketurl   = "https://jira.talos.cisco.com/browse/{}".format(ticket)
     jiraAPI     = "https://jira.talos.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
-    fields      = "&fields=description,summary,created,assignee,reporter,resolutiondate,customfield_12385"
+    fields      = "&fields=description,summary,customfield_20042,customfield_20043" # old jira.sco filed for finding ips customfield_12385"
     headers     = {'Content-type': 'application/json'}
     response    = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
     data,rules,scr,date,match = (None,None,None,None,None)
     if response.status_code == 200:
         jsondict = response.json()
-        #print('jira lql search for cog ticket', json.dumps(jsondict, indent=2))
+        #print('jira jql search for cog ticket', json.dumps(jsondict, indent=2))
         extractedips = []
-        desc = jsondict['issues'][0]['fields']['description']
-        smry = jsondict['issues'][0]['fields']['summary']
-        created = jsondict['issues'][0]['fields']['created']
-        resolved = jsondict['issues'][0]['fields']['resolutiondate']
-        rulehits = jsondict['issues'][0]['fields']['customfield_12385']
+        desc    = jsondict['issues'][0]['fields']['description']
+        smry    = jsondict['issues'][0]['fields']['summary']
+        cf20042 = jsondict['issues'][0]['fields']['customfield_20042']
+        cf20043 = jsondict['issues'][0]['fields']['customfield_20043']
+        #rulehits = jsondict['issues'][0]['fields']['customfield_12385']
         #format desc and smry to not have line breaks tabs and spacing
         frmtdesc = desc.translate(str.maketrans(' ', ' ', '\n\t\r'))
         frmtsmry = smry.translate(str.maketrans(' ', ' ', '\n\t\r'))
         # regex to find ipv4 addresses
         ipPattern = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
-        # Check for any IPs in the summary
-        for match in re.findall(ipPattern, smry):
+        # Check for any IPs in the custom fields
+        for match in re.findall(ipPattern, cf20042):
+            extractedips.append(match)
+        for match in re.findall(ipPattern, cf20043):
             extractedips.append(match)
         # Check for any IPs in the desc
         for match in re.findall(ipPattern, desc):
@@ -43,9 +45,7 @@ def ticketdata(ticket):
                     Desc: "+ str(frmtdesc)+"\n \
                     Summary: "+str(frmtsmry)+"\n \
                     IP Addresses Submitted: {}".format(ips)+"\n \
-                    Date Opened: {}".format(created)+"\n \
-                    Date Closed: {}".format(resolved)+"\n \
-                    \n===RealTime Threat Analysis===\n \
+                    ===RealTime Threat Analysis===\n \
                     IP Analyzed: {}".format(i) + "\n \
                     Date: {}".format(date)+"\n \
                     Score: {}".format(scr)+"\n \
@@ -59,7 +59,7 @@ def ticketdata(ticket):
             cidrscore(match,ticket)
         elif re.search(r'/.{2}',desc) is True: # this is a cidr entry in description
             cidrscore(match,ticket)
-        else:
+        else: # no IP addresses found in ticket
             err = "No valid IPv4 Addresses"
             logdata.logger.info(str(date)+":"+str(err))
     else:
