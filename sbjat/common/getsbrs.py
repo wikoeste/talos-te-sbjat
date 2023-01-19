@@ -2,7 +2,7 @@ from sbjat.common import settings
 from sbjat.common import postjira
 from sbjat.common import logdata
 from netaddr import IPNetwork
-import requests,subprocess,shlex,re,time
+import requests,subprocess,shlex,re,time,json
 from ipaddress import ip_address
 requests.packages.urllib3.disable_warnings()
 
@@ -15,7 +15,7 @@ def ticketdata(ticket):
     data,rules,scr,date,match = (None,None,None,None,None)
     if response.status_code == 200:
         jsondict = response.json()
-        #print('jira jql search for cog ticket', json.dumps(jsondict, indent=2))
+        print('jira jql search for cog ticket', json.dumps(jsondict, indent=2))
         extractedips = []
         desc    = jsondict['issues'][0]['fields']['description']
         smry    = jsondict['issues'][0]['fields']['summary']
@@ -28,10 +28,12 @@ def ticketdata(ticket):
         # regex to find ipv4 addresses
         ipPattern = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
         # Check for any IPs in the custom fields
-        for match in re.findall(ipPattern, cf20042):
-            extractedips.append(match)
-        for match in re.findall(ipPattern, cf20043):
-            extractedips.append(match)
+        if cf20042 is not None:
+            for match in re.findall(ipPattern, cf20042):
+                extractedips.append(match)
+        if cf20043 is not None:
+            for match in re.findall(ipPattern, cf20043):
+                extractedips.append(match)
         # Check for any IPs in the desc
         for match in re.findall(ipPattern, desc):
             extractedips.append(match)
@@ -40,7 +42,7 @@ def ticketdata(ticket):
         if len(ips) > 0:
             for i in ips:
                 scr, rules, pbl, ip, date = score(i)  # send the ip list to get the SBRS score,rulehits, and possible pbl, of each ip from the ticket summary or description
-                data = "==SBRS Jira Ticket Date at Creation==\n \
+                data = "==SBRS Threat Intel==\n \
                     Ticket: "+str(ticket)+"\n \
                     Desc: "+ str(frmtdesc)+"\n \
                     Summary: "+str(frmtsmry)+"\n \
@@ -54,7 +56,8 @@ def ticketdata(ticket):
                 logdata.logger.info(str(date)+":"+str(data))
                 # post comment to jira and update ticket fields
                 flag = postjira.comment(ticket,data,rules,scr,i)
-                #postjira.resolveclose(ticket, flag)  # update resolution for each ip
+                #Resolve the ticket is possible via automation
+                postjira.resolveclose(ticket, flag)  # update resolution for each ip
         if re.search(r'/.{2}',smry) is True: # this is a cidr entry in summary field
             cidrscore(match,ticket)
         elif re.search(r'/.{2}',desc) is True: # this is a cidr entry in description
@@ -62,9 +65,11 @@ def ticketdata(ticket):
         else: # no IP addresses found in ticket
             err = "No valid IPv4 Addresses"
             logdata.logger.info(str(date)+":"+str(err))
+            print(err)
     else:
         err = "HTTP ERROR: {}".format(response.status_code),ticket + " Jira API Search"
         logdata.logger.info(str(date)+":"+str(err))
+        print(err)
 
 def cidrscore(ips,ticket):
     print("Only IP addresses with a Poor/malicious,"
