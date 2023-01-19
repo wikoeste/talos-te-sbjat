@@ -89,8 +89,7 @@ def cidrscore(ips,ticket):
             #post comment to jira and update ticket fields, resolve
             postjira.comment(ticket,analysis,rules,scr,i)
             logdata.logger.info(str(analysis))
-    #do not close case review the issue first
-    #jira.transition_issue(issue, '711', fields={'assignee': {'name': 'wikoeste'}})
+        #DECIDE IF WE AUTOCLOSE OR LEAVE FOR MANUAL REVIEW
 
 def score(ip):
     date = time.strftime("%Y-%m-%d %H:%M")

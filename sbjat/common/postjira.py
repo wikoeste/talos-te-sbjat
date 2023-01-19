@@ -1,4 +1,5 @@
 from sbjat.common import settings
+from sbjat.common import logdata
 from jira import JIRA
 
 def assign(ticket):
@@ -76,12 +77,16 @@ def resolveclose(ticket,flag):
     # Resolve the issue and set resolution to close is status is not cog investigating
     if flag == 1 and 'COG' in str(status):
         jira.transition_issue(issue, '741', resolution={'id': '1'})
+        logdata.logger.info("Resolved Fixed")
     elif flag == 1 and 'Pending' in str(status):
             jira.transition_issue(issue, '741', resolution={'id': '1'})
+            logdata.logger.info("Resolved Fixed")
     elif flag == 1:
         jira.transition_issue(issue, '721')
+        logdata.logger.info("COG-Investigating")
     else:
         jira.transition_issue(issue, '721')
+        logdata.logger.info("COG-Investigating")
 '''
 resolution ids
 # 1 = Fixed
