@@ -5,9 +5,11 @@ import logging,os   # first of all import the module
 #Crate logger
 # write to users home directory
 homedir = os.path.expanduser("~")
-print(homedir)
 fname   = 'sbjat_sbrs_audit.log'
-fmt     = '%(asctime)s:%(name)s:%(levelname)s - %(message)s'
-logging.basicConfig(filename=homedir+"/"+fname, format= fmt)
+logging.basicConfig(
+    format='%(asctime)s:%(name)s:%(levelname)s - %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S',
+    filename=homedir+"/"+fname)
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
