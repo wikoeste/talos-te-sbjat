@@ -9,6 +9,7 @@ changed from jira.sco to jira.talos for 01/03/2023 queue change
 updated the boiler plates for ipedia changes
 removed the writing of rule hits since that field is not present in jira.talos
 removed qry error for sbrs in main.py
+added timestamp to logging file for tracking
 
 1.0
 fixed ip data in jira comment to be the correct ip if there are multiple ips
