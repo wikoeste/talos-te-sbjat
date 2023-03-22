@@ -13,7 +13,8 @@ def main():
     print("\n===Senderbase Jira Automation Tool (sbjat)==="+settings.version)
     #Collect all SBRS tickets in the last day
     options = {"server": "https://jira.talos.cisco.com"}
-    jira    = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
+    #jira    = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
+    jira    = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
     #qry    = 'project = COG AND cf[12380] in cascadeOption(14037) AND created >= -24d AND assignee in (EMPTY) ORDER BY key ASC'
     qry    = 'project = COG AND issuetype = SBRS AND created >= -1d AND assignee in (EMPTY) ORDER BY key ASC'
     sbrs    = jira.search_issues(qry, maxResults=100) # get max 100 results
@@ -24,10 +25,10 @@ def main():
     for match in re.findall(cog, cases): # extract the cog ticket id cog-12345
         clist.append(match)
     totalsbrstickets = len(clist)
-    print('Total sbrs cases in last days is {}'.format(totalsbrstickets))
+    print('Total sbrs cases in last day (24 hours) is {}'.format(totalsbrstickets))
     print(clist)
     logdata.logger.info(clist)
-    print("=====\n\n")
+    print("=====")
     for i in clist:
         # take ownership, parse for data, analyze data,
         # return and post analysis results in private comment,
@@ -39,5 +40,7 @@ def main():
     if len(clist) == 0:
         print("No valid Tickets")
         logdata.logger.info("No valid Tickets")
+    ##testing/debuging
+    #getsbrs.ticketdata('COG-64519')
 if __name__ == '__main__':
     main()

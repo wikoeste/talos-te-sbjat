@@ -11,11 +11,12 @@ def ticketdata(ticket):
     jiraAPI     = "https://jira.talos.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
     fields      = "&fields=description,summary,customfield_20042,customfield_20043" # old jira.sco filed for finding ips customfield_12385"
     headers     = {'Content-type': 'application/json'}
-    response    = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
+    #response    = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
+    response    = requests.get(jiraAPI+fields, headers=headers, auth=(settings.uname, settings.jiraKey), verify=False)
     data,rules,scr,date,match = (None,None,None,None,None)
     if response.status_code == 200:
         jsondict = response.json()
-        print('jira jql search for cog ticket', json.dumps(jsondict, indent=2))
+        #print('jira jql search for cog ticket', json.dumps(jsondict, indent=2))
         extractedips = []
         desc    = jsondict['issues'][0]['fields']['description']
         smry    = jsondict['issues'][0]['fields']['summary']
@@ -41,23 +42,23 @@ def ticketdata(ticket):
         flag = 0
         if len(ips) > 0:
             for i in ips:
-                scr, rules, pbl, ip, date = score(i)  # send the ip list to get the SBRS score,rulehits, and possible pbl, of each ip from the ticket summary or description
-                data = "==SBRS Threat Intel==\n \
-                    Ticket: "+str(ticket)+"\n \
-                    Desc: "+ str(frmtdesc)+"\n \
-                    Summary: "+str(frmtsmry)+"\n \
-                    IP Addresses Submitted: {}".format(ips)+"\n \
+                scr, rules, pbln, ip, date = score(i)  # send the ip list to get the SBRS score,rulehits, and possible pbl, of each ip from the ticket summary or description
+                data = ("==SBRS Threat Intel==" +
+                    #Ticket: "+str(ticket)+"\n
+                    #Desc: "+ str(frmtdesc)+"\n
+                    #Summary: "+str(frmtsmry)+"\n
+                    "\nIP Addresses Submitted: {}".format(ips)+"\n \
                     ===RealTime Threat Analysis===\n \
                     IP Analyzed: {}".format(i) + "\n \
                     Date: {}".format(date)+"\n \
                     Score: {}".format(scr)+"\n \
                     Rule Hits: {}".format(rules)+"\n \
-                    Public Block List: {}".format(pbl)
+                    Public Block List: {}".format(pbln))
                 logdata.logger.info(str(date)+":"+str(data))
                 # post comment to jira and update ticket fields
                 flag = postjira.comment(ticket,data,rules,scr,i)
                 #Resolve the ticket is possible via automation
-                postjira.resolveclose(ticket, flag)  # update resolution for each ip
+                #postjira.resolveclose(ticket, flag)  # update resolution for each ip
         if re.search(r'/.{2}',smry) is True: # this is a cidr entry in summary field
             cidrscore(match,ticket)
         elif re.search(r'/.{2}',desc) is True: # this is a cidr entry in description
@@ -105,7 +106,7 @@ def score(ip):
     split = out.split()
     if len(split) == 0:
         # return empty results
-        return score,rules,pbl,ip,date
+        return score,rules,pblname,ip,date
     else:
         data = split[4]
         data = re.sub('b\'\"|\"\'', '', str(data))
@@ -114,6 +115,7 @@ def score(ip):
         res = data.split(' ')
         # Check for the ip in dnsbl / pbl
         pblname = pbl(revip)
+        print(pblname)
         score = res[1]
         rules = res[5]
         rules = ' '.join([rules[i:i + 3] for i in range(0, len(rules), 3)])
@@ -123,7 +125,7 @@ def score(ip):
 def pbl(revip): # check the public blacklists and return the results
     blacklists = ("bl.spamcop.net", "cbl.abuseat.org", "pbl.spamhaus.org",
                   "sbl.spamhaus.org", "xbl.spamhaus.org","dnsbl.invaluement.com")
-    res = ''
+    res = []
     for bl in blacklists:
         digcmd = 'dig +short ' + str(revip) + '.' + str(bl)
         proc = subprocess.Popen(shlex.split(digcmd), stdout=subprocess.PIPE)
@@ -131,7 +133,6 @@ def pbl(revip): # check the public blacklists and return the results
         decode = out.decode('utf-8')
         # test if an ip is returned from block list lookups
         if re.match('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', decode):
-            res = bl
-        if res is None:
-            res = "Not Found"
-        return res
+            res.append(bl)
+    print(res)
+    return res

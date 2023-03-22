@@ -3,6 +3,12 @@
 # Author: wikoeste
 
 # Release Notes
+1.2
+added api key for jira 
+changed to use api over cec / removed cec from settings
+fixed error with multiple ips not printing/writing results
+disabled #postjira.resolveclose()
+
 1.1
 updated api key error found on test and prod tepot hosts
 changed from jira.sco to jira.talos for 01/03/2023 queue change

@@ -4,7 +4,7 @@ from jira import JIRA
 
 def assign(ticket):
     options     = {"server": "https://jira.talos.cisco.com"}
-    jira        = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
+    jira = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
     #issue       = jira.issue(ticket)
     jira.assign_issue(ticket, 'wikoeste')
     # priority    = issue.fields.priority.name
@@ -12,9 +12,9 @@ def assign(ticket):
 
 def comment(ticket,data,rules,scr,ip):
     #ticket = 'COG-53664'
-    #ticket  = 'COG-62858'
+    #ticket  = 'COG-64519'
     options = {"server": "https://jira.talos.cisco.com"}
-    jira = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
+    jira = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
     # private comment
     comment = jira.add_comment(ticket, str(data), visibility={'type': 'role', 'value': 'Project Developer'})
     issue = jira.issue(ticket)
@@ -68,7 +68,7 @@ def comment(ticket,data,rules,scr,ip):
 
 def resolveclose(ticket,flag):
     options = {"server": "https://jira.talos.cisco.com"}
-    jira = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
+    jira = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
     issue = jira.issue(ticket)
     transitions = jira.transitions(issue)
     print([(t['id'], t['name']) for t in transitions])
