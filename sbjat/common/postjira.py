@@ -11,8 +11,6 @@ def assign(ticket):
     # issue.update(priority={'name': 'P4'}) # set to a p4
 
 def comment(ticket,data,rules,scr,ip):
-    #ticket = 'COG-53664'
-    #ticket  = 'COG-64519'
     options = {"server": "https://jira.talos.cisco.com"}
     jira = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
     # private comment
@@ -24,13 +22,13 @@ def comment(ticket,data,rules,scr,ip):
     if float(scr) >= -1.9:
         jira.add_comment(ticket, ip +": " + settings.boilerplates["recovered"])
         return 1
-    elif ("IaM" and "DhM") in rules or ("Rs" and "Rh") in rules and float(scr) <= -2.0:
+    elif ("IaM" or "DhM") in rules or ("RsH" or "RhM") in rules or ("rsM" or "rhM") in rules and float(scr) <= -2.0:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
         return 1
     elif "Gry" in rules and float(scr) <= -2.0:
         jira.add_comment(ticket,ip +": " +  settings.boilerplates["grey"])
         return 2
-    elif "Cbl" or "Pbl" or "Sbl" or "Css" in rules and float(scr) <= -2.0:
+    elif ("Cbl" or "Pbl" or "Sbl" or "Css") in rules and float(scr) <= -2.0:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
         return 1
     elif "Ce" or "Ve" in rules and float(scr) <= -2.0:
