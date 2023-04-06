@@ -3,6 +3,8 @@
 # Author: wikoeste
 
 # Release Notes
+1.3
+fixed the jira comment for rule hits added the -2 score as well to post the correct template
 1.2
 added api key for jira 
 changed to use api over cec / removed cec from settings

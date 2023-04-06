@@ -32,7 +32,7 @@ wbrs         = 'https://prod-wbrsruleapi-app2.sv4.ironport.com/'
 wbrs2        = 'https://prod-wbrsruleapi-vip.sv4.ironport.com/'
 cecpw        = ""
 jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
-version      = '1.2'
+version      = '1.3'
 #SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \
                 In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week \

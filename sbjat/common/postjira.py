@@ -24,34 +24,34 @@ def comment(ticket,data,rules,scr,ip):
     if float(scr) >= -1.9:
         jira.add_comment(ticket, ip +": " + settings.boilerplates["recovered"])
         return 1
-    elif "IaM" and "DhM" in rules or "RS" and "Rh" in rules:
+    elif ("IaM" and "DhM") in rules or ("Rs" and "Rh") in rules and float(scr) <= -2.0:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
         return 1
-    elif "Gry" in rules:
+    elif "Gry" in rules and float(scr) <= -2.0:
         jira.add_comment(ticket,ip +": " +  settings.boilerplates["grey"])
         return 2
-    elif "Cbl" or "Pbl" or "Sbl" or "Css" in rules:
+    elif "Cbl" or "Pbl" or "Sbl" or "Css" in rules and float(scr) <= -2.0:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
         return 1
-    elif "Ce" or "Ve" in rules:
+    elif "Ce" or "Ve" in rules and float(scr) <= -2.0:
         # private comment
         jira.add_comment(ticket, ip + ": " + "IP listed in http://enemieslist.com/classifications/",
             visibility={'type': 'role', 'value': 'Project Developer'})
         return 2
-    elif "Cp1" or "Cp2" or "Vp1" or "Vp2" in rules:
+    elif "Cp1" or "Cp2" or "Vp1" or "Vp2" in rules and float(scr) <= -2.0:
         jira.add_comment(ticket, ip + ": " + settings.boilerplates["cp1"])
         return 1
-    elif "Ivn" or "Ivm":
+    elif "Ivn" or "Ivm" and float(scr) <= -2.0:
         # private comment
         jira.add_comment(ticket, ip + ": " + "listed on Invalument: https://www.invaluement.com/",
             visibility={'type': 'role', 'value': 'Project Developer'})
         return 2
-    elif "Vu" or "Cu" in rules:
+    elif "Vu" or "Cu" in rules and float(scr) <= -2.0:
         # private comment
         jira.add_comment(ticket, ip + ": " + "a domain associated with this IP are listed in the URIDB feed.",
             visibility={'type': 'role', 'value': 'Project Developer'})
         return 2
-    elif "Rtm" in rules:
+    elif "Rtm" in rules and float(scr) <= -2.0:
         # private comment
         jira.add_comment(ticket, ip + ": " + "is blocked by a Reptool entry",
             visibility = {'type': 'role', 'value': 'Project Developer'})
