@@ -1,11 +1,9 @@
 import getpass,re,os.path,queue
-# Global List
-def init():
-    global uname,que,sherlock,sherlockKey,wbrsKey
-    global wbrs,wbrs2,boilerplates,cecpw,version,jiraKey
+def init():                                 # Global List of variables
+    global uname,cecpw,sherlock,sherlockKey,boilerplates,version,jiraKey
+    global juno,junoKey
 
-def getKey(keyname):
-    #take the search keyname and return the appropriate api key
+def getKey(keyname):                        # take the search keyname and return the appropriate api key
     match     = ''
     freebsd   = "/home/{}".format(uname)+"/.profile"
     osx       = "/Users/{}".format(uname)+"/.profile"
@@ -23,17 +21,15 @@ def getKey(keyname):
     return key
 
 #Get user creds and API Keys at start
-que = queue.Queue()
 uname        = getpass.getuser()
+cecpw        = "the$AM@dm1n^"
 sherlockKey  = getKey("sherlock")
-wbrsKey      = '2d7ca813282559235f8fe3eb776eb0e5557161ea36a22faa'
 sherlock     = 'https://sherlock.ironport.com/webapi/'
-wbrs         = 'https://prod-wbrsruleapi-app2.sv4.ironport.com/'
-wbrs2        = 'https://prod-wbrsruleapi-vip.sv4.ironport.com/'
-cecpw        = ""
+juno         = 'https://prod-juno-search-api.sv4.ironport.com/'
+junoKey      = getKey("jupiter")
 jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
-version      = '1.3'
-#SBRS Boilerplates
+version      = '1.5'
+# SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \
                 In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week \
                 to improve, depending on the specifics of the situation, and how much email volume the IP sends. Complaint ratios determine the amount \

@@ -1,84 +1,73 @@
-from sbjat.common import settings
-from sbjat.common import postjira
-from sbjat.common import logdata
-from netaddr import IPNetwork
+import ipaddress
+
+from sbjat.common import settings,postjira,juno,logdata
+from sbjat import main as menu
+from ipaddress import ip_address, IPv4Address
+from netaddr import IPNetwork, valid_ipv4,valid_ipv6
 import requests,subprocess,shlex,re,time,json
-from ipaddress import ip_address
 requests.packages.urllib3.disable_warnings()
 
-def ticketdata(ticket):
-    ticketurl   = "https://jira.talos.cisco.com/browse/{}".format(ticket)
-    jiraAPI     = "https://jira.talos.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
-    fields      = "&fields=description,summary,customfield_20042,customfield_20043" # old jira.sco filed for finding ips customfield_12385"
-    headers     = {'Content-type': 'application/json'}
-    #response    = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
-    response    = requests.get(jiraAPI+fields, headers=headers, auth=(settings.uname, settings.jiraKey), verify=False)
-    data,rules,scr,date,match = (None,None,None,None,None)
-    if response.status_code == 200:
-        jsondict = response.json()
-        #print('jira jql search for cog ticket', json.dumps(jsondict, indent=2))
-        extractedips = []
-        desc    = jsondict['issues'][0]['fields']['description']
-        smry    = jsondict['issues'][0]['fields']['summary']
-        cf20042 = jsondict['issues'][0]['fields']['customfield_20042']
-        cf20043 = jsondict['issues'][0]['fields']['customfield_20043']
-        #rulehits = jsondict['issues'][0]['fields']['customfield_12385']
-        #format desc and smry to not have line breaks tabs and spacing
-        frmtdesc = desc.translate(str.maketrans(' ', ' ', '\n\t\r'))
-        frmtsmry = smry.translate(str.maketrans(' ', ' ', '\n\t\r'))
-        # regex to find ipv4 addresses
-        ipPattern = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
-        # Check for any IPs in the custom fields
-        if cf20042 is not None:
-            for match in re.findall(ipPattern, cf20042):
-                extractedips.append(match)
-        if cf20043 is not None:
-            for match in re.findall(ipPattern, cf20043):
-                extractedips.append(match)
-        # Check for any IPs in the desc
-        for match in re.findall(ipPattern, desc):
-            extractedips.append(match)
-        ips = list(set(extractedips)) # remove duplicate ips
-        flag = 0
-        if len(ips) > 0:
-            for i in ips:
-                scr, rules, pbln, ip, date = score(i)  # send the ip list to get the SBRS score,rulehits, and possible pbl, of each ip from the ticket summary or description
-                data = ("==SBRS Threat Intel==" +
-                    #Ticket: "+str(ticket)+"\n
-                    #Desc: "+ str(frmtdesc)+"\n
-                    #Summary: "+str(frmtsmry)+"\n
-                    "\nIP Addresses Submitted: {}".format(ips)+"\n \
-                    ===RealTime Threat Analysis===\n \
-                    IP Analyzed: {}".format(i) + "\n \
-                    Date: {}".format(date)+"\n \
-                    Score: {}".format(scr)+"\n \
-                    Rule Hits: {}".format(rules)+"\n \
-                    Public Block List: {}".format(pbln))
-                logdata.logger.info(str(date)+":"+str(data))
-                # post comment to jira and update ticket fields
-                flag = postjira.comment(ticket,data,rules,scr,i)
-                #Resolve the ticket is possible via automation
-                #postjira.resolveclose(ticket, flag)  # update resolution for each ip
-        if re.search(r'/.{2}',smry) is True: # this is a cidr entry in summary field
-            cidrscore(match,ticket)
-        elif re.search(r'/.{2}',desc) is True: # this is a cidr entry in description
-            cidrscore(match,ticket)
-        else: # no IP addresses found in ticket
-            err = "No valid IPv4 Addresses"
-            logdata.logger.info(str(date)+":"+str(err))
-            print(err)
-    else:
-        err = "HTTP ERROR: {}".format(response.status_code),ticket + " Jira API Search"
-        logdata.logger.info(str(date)+":"+str(err))
-        print(err)
+#entered from ticket data checks for ipv4
+# in known spam block lists
+def pbl(revip): # check the public blacklists and return the results
+    blacklists = ("bl.spamcop.net", "cbl.abuseat.org", "pbl.spamhaus.org",
+                  "sbl.spamhaus.org", "xbl.spamhaus.org","dnsbl.invaluement.com")
+    res = []
+    for bl in blacklists:
+        digcmd = 'dig +short ' + str(revip) + '.' + str(bl)
+        proc = subprocess.Popen(shlex.split(digcmd), stdout=subprocess.PIPE)
+        out, err = proc.communicate()
+        decode = out.decode('utf-8')
+        # test if an ip is returned from block list lookups
+        if re.match('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', decode):
+            res.append(bl)
+    return res
 
+#entered from ticketdata
+#get ip geo data
+def getgeoip(ip):
+    cont,cntry,subdnm,timzn = (None,None,None,None)
+    metadata = []
+    confid   = {'continent': 0, 'country': 0, 'locale': 0}
+    endpoint = "https://api-private.thetap.cisco.com/geoip/v1/ip/"
+    resp     =  requests.get(endpoint+ip,verify=False)
+    if resp.status_code == 200:
+        rj = resp.json()
+        #print(json.dumps(rj,indent=2))
+        cont   = rj['location']['continent']['name']
+        cntry  = rj['location']['country']['name']
+        subdnm = rj['location']['subdivision']['name']
+        timezn = rj['location']['time_zone']
+        confid.update({"continent":rj['confidence']['continent']})
+        confid.update({"country":rj['confidence']['country']})
+        confid.update({"locale":rj['confidence']['subdivision']})
+        metadata.append("ASN: {}".format(rj['additional']['asn_name']))
+        metadata.append("ISP: {}".format(rj['additional']['isp']))
+        metadata.append("Type: {}".format(rj['additional']['user_type']))
+        data = (
+        "==GEOIP Results==" \
+		"\nContinent: {}".format(cont)+
+        "\nCountry: {}".format(cntry)+
+		"\nLocale: {}".format(subdnm)+
+		"\nMisc: {}".format(metadata)+
+		"\nConfidence: {}".format(confid)
+        )
+        return(data)
+    else:
+        return "==GeoDB API Error {}==".format(resp.status_code)
+
+#entered from ticketdate to check if there is a cidr
+#in the jira desc or summary
 def cidrscore(ips,ticket):
+    flag = 0
     print("Only IP addresses with a Poor/malicious,"
           "SBRS score will print for any CIDR!\n")
     for i in IPNetwork(ips):
         # get sbrs score and if -2.0 or more get sbrs data for that IP only
         scr,rules,pbl,ip,date = score(i)
         if float(scr) < -2.0:
+            # get geoip data on that ip
+            geoipdata = getgeoip(i)
             # Create SBRS table
             analysis = "\n===RealTimeThreat Analysis===\n \
                 Date: {}".format(date)+"\n \
@@ -86,12 +75,14 @@ def cidrscore(ips,ticket):
                 IP: {}".format(ip)+"\n \
                 Score {}".format(scr)+"\n \
                 Rule Hits: {}".format(rules)+"\n \
-                Public Block List: {}".format(pbl)
+                Public Block List: {}".format(pbl) \
+                +"\n"+str(geoipdata)
             #post comment to jira and update ticket fields, resolve
-            postjira.comment(ticket,analysis,rules,scr,i)
-            logdata.logger.info(str(analysis))
-        #DECIDE IF WE AUTOCLOSE OR LEAVE FOR MANUAL REVIEW
+            flag = postjira.comment(ticket,analysis,rules,scr,i)
+        postjira.resolveclose(ticket, flag)  # update resolution for each ip in the cidr
+        logdata.logger.info(str(analysis))
 
+#Entered from ticketdata to get ipv4 socre
 def score(ip):
     date = time.strftime("%Y-%m-%d %H:%M")
     revip = ip_address(ip).reverse_pointer
@@ -115,24 +106,102 @@ def score(ip):
         res = data.split(' ')
         # Check for the ip in dnsbl / pbl
         pblname = pbl(revip)
-        print(pblname)
         score = res[1]
         rules = res[5]
         rules = ' '.join([rules[i:i + 3] for i in range(0, len(rules), 3)])
         results = "None"
         return score,rules,pblname,ip,date
 
-def pbl(revip): # check the public blacklists and return the results
-    blacklists = ("bl.spamcop.net", "cbl.abuseat.org", "pbl.spamhaus.org",
-                  "sbl.spamhaus.org", "xbl.spamhaus.org","dnsbl.invaluement.com")
-    res = []
-    for bl in blacklists:
-        digcmd = 'dig +short ' + str(revip) + '.' + str(bl)
-        proc = subprocess.Popen(shlex.split(digcmd), stdout=subprocess.PIPE)
-        out, err = proc.communicate()
-        decode = out.decode('utf-8')
-        # test if an ip is returned from block list lookups
-        if re.match('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', decode):
-            res.append(bl)
-    print(res)
-    return res
+#Entered from main
+def ticketdata(ticket):
+    flag        = 0
+    ipvers      = None
+    ticketurl   = "https://jira.talos.cisco.com/browse/{}".format(ticket)
+    jiraAPI     = "https://jira.talos.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
+    fields      = "&fields=description,summary,customfield_20042,customfield_20043,customfield_20380" # old jira.sco filed for finding ips customfield_12385"
+    headers     = {'Content-type': 'application/json'}
+    #response    = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
+    response    = requests.get(jiraAPI+fields, headers=headers, auth=(settings.uname, settings.jiraKey), verify=False)
+    data,rules,scr,date,match = (None,None,None,None,None)
+    if response.status_code == 200:
+        jsondict = response.json()
+        #print('custom jira fields jql search for cog ticket', json.dumps(jsondict, indent=2))
+        extractedips = []
+        desc    = jsondict['issues'][0]['fields']['description']
+        smry    = jsondict['issues'][0]['fields']['summary']
+        cf20042 = jsondict['issues'][0]['fields']['customfield_20042']
+        cf20043 = jsondict['issues'][0]['fields']['customfield_20043'] #ipfield
+        cf20380 = jsondict['issues'][0]['fields']['customfield_20380'] #rule hits
+        #rulehits = jsondict['issues'][0]['fields']['customfield_12385']
+        #format desc and smry to not have line breaks tabs and spacing
+        frmtdesc    = desc.translate(str.maketrans(' ', ' ', '\n\t\r'))
+        frmtsmry    = smry.translate(str.maketrans(' ', ' ', '\n\t\r'))
+        # regex to find ipv4 addresses
+        ipPattern   = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
+        # regex for ipv6
+        ipv6pattern = re.compile('(([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4})')
+        # Check for any IPs in the custom fields
+        if cf20042 is not None:
+            for match in re.findall(ipPattern, cf20042):#ipv4
+                extractedips.append(match)
+            for match in re.findall(ipv6pattern, cf20042):#ipv6
+                for m in match:
+                    extractedips.append(m[0])
+        if cf20043 is not None:
+            for match in re.findall(ipPattern, cf20043):#ipv4
+                extractedips.append(match)
+            for match in re.findall(ipv6pattern, cf20043):#ipv6
+                for m in match:
+                    extractedips.append(match[0])
+        # Check for any IPs in the desc
+        for match in re.findall(ipPattern, desc):#ipv4
+            extractedips.append(match)
+        for match in re.findall(ipv6pattern, desc):#ipv6
+            for m in match:
+                if m[0] != 'd:':
+                    extractedips.append(m[0])
+        ips  = list(set(extractedips)) # remove duplicate ips
+        ips.remove(('d'))
+        # Check the summary and description for CIDR entries
+        if re.search(r'/.{2}', smry) is True:  # this is a cidr entry in summary field
+            cidrscore(match, ticket)
+        if re.search(r'/.{2}', desc) is True:  # this is a cidr entry in description
+            cidrscore(match, ticket)
+        #if there are ip address then get the sbrs data
+        if len(ips) > 0:
+            for i in ips:
+                if valid_ipv6(i): # if the ip is v6 get v6 data
+                    ipv6results,v6rules,scr = juno.getipv6(i)
+                    geoipdata = getgeoip(i)
+                    #print(ipv6results)
+                    #print(geoipdata)
+                    data = ipv6results+geoipdata
+                    logdata.logger.info(str(date) + ":" + str(ipv6results)+str(geoipdata))
+                    # post comment to jira and update ticket fields
+                    flag = postjira.comment(ticket,data,str(v6rules),scr,i)
+                else: #ipv4 addres and get the ipv4 data
+                    scr, rules, pbln, ip, date = score(i)  # send the ip list to get the SBRS score,rulehits, and possible pbl, of each ip from the ticket summary or description
+                    geoipdata = getgeoip(i)
+                    data = ("\n==SBRS Threat Intel==\n" \
+                    #"IP Addresses Submitted: {}".format(ips)+"\n \
+                    "===RealTime Threat Analysis===\n \
+                    IP Analyzed: {}".format(i) + "\n \
+                    Date: {}".format(date)+"\n \
+                    Score: {}".format(scr)+"\n \
+                    Rule Hits: {}".format(rules)+"\n \
+                    Public Block List: {}".format(pbln)+"\n \
+                    "+str(geoipdata)+"")
+                    #print(data)
+                    logdata.logger.info(str(date)+":"+str(data))
+                    # post comment to jira and update ticket fields
+                    flag = postjira.comment(ticket,data,str(rules),scr,i)
+            #Resolve the ticket is possible via automation
+            postjira.resolveclose(ticket, flag)  # update resolution for each ip
+        else: # no IP addresses found in ticket
+            err = "\nNo valid IPv4 or IPv6 Addresses found in IP fields of the ticket"
+            logdata.logger.info(str(date)+":"+str(err))
+            print(err)
+    else:
+        err = "\nHTTP ERROR: {}".format(response.status_code),ticket + " Jira API Search"
+        logdata.logger.info(str(date)+":"+str(err))
+        print(err)

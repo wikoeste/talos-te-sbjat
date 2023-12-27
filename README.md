@@ -3,6 +3,15 @@
 # Author: wikoeste
 
 # Release Notes
+1.5
+added geoip data
+added auto resolution to the tickets
+added ipv6 lookup support
+
+1.4
+jira comments need fixed to post the correct response
+removed erroneous code and old comments
+
 1.3
 fixed the jira comment for rule hits added the -2 score as well to post the correct template
 1.2
