@@ -77,9 +77,10 @@ def cidrscore(ips,ticket):
                 Rule Hits: {}".format(rules)+"\n \
                 Public Block List: {}".format(pbl) \
                 +"\n"+str(geoipdata)
-            #post comment to jira and update ticket fields, resolve
+            #post comment to jira and update ticket fields
             flag = postjira.comment(ticket,analysis,rules,scr,i)
-        postjira.resolveclose(ticket, flag)  # update resolution for each ip in the cidr
+        # update the ticket resolution and or close automatically
+        postjira.resolveclose(ticket, flag)
         logdata.logger.info(str(analysis))
 
 #Entered from ticketdata to get ipv4 socre
@@ -161,7 +162,8 @@ def ticketdata(ticket):
                 if m[0] != 'd:':
                     extractedips.append(m[0])
         ips  = list(set(extractedips)) # remove duplicate ips
-        ips.remove(('d'))
+        if 'd' in ips:
+            ips.remove(('d'))
         # Check the summary and description for CIDR entries
         if re.search(r'/.{2}', smry) is True:  # this is a cidr entry in summary field
             cidrscore(match, ticket)
@@ -196,6 +198,16 @@ def ticketdata(ticket):
                     # post comment to jira and update ticket fields
                     flag = postjira.comment(ticket,data,str(rules),scr,i)
             #Resolve the ticket is possible via automation
+            # if this is a geoip ticket then set to 3 and do not auto resolve.
+            for m in settings.geolocation:
+                if str(m) in str(smry):
+                    print(ticket, "Investigating the reported Geolocation issue. Update to follow")
+                    #jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
+                    flag = 3
+                if str(m) in str(desc):
+                    print(ticket, "Investigating the reported Geolocation issue. Update to follow")
+                    #jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
+                    flag = 3
             postjira.resolveclose(ticket, flag)  # update resolution for each ip
         else: # no IP addresses found in ticket
             err = "\nNo valid IPv4 or IPv6 Addresses found in IP fields of the ticket"

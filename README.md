@@ -7,6 +7,7 @@
 added geoip data
 added auto resolution to the tickets
 added ipv6 lookup support
+added geolocation check to not auto resolve ticket
 
 1.4
 jira comments need fixed to post the correct response

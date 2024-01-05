@@ -1,7 +1,7 @@
 import getpass,re,os.path,queue
 def init():                                 # Global List of variables
     global uname,cecpw,sherlock,sherlockKey,boilerplates,version,jiraKey
-    global juno,junoKey
+    global juno,junoKey,geolocation
 
 def getKey(keyname):                        # take the search keyname and return the appropriate api key
     match     = ''
@@ -19,7 +19,6 @@ def getKey(keyname):                        # take the search keyname and return
     key = re.sub(r'.*=','',match)
     key = re.sub(r'"', '', key)
     return key
-
 #Get user creds and API Keys at start
 uname        = getpass.getuser()
 cecpw        = "the$AM@dm1n^"
@@ -29,6 +28,7 @@ juno         = 'https://prod-juno-search-api.sv4.ironport.com/'
 junoKey      = getKey("jupiter")
 jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
 version      = '1.5'
+geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown']
 # SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \
                 In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week \
@@ -70,6 +70,6 @@ boilerplates = {"general":"If the spam problem is fixed as you believe it to be,
                 "cp1":"The IP address or addresses have a poor Talos Intelligence email reputation because the IP is helo-ing with a generic host name string. \
                 This is a known behavior pattern with BOT infected systems. The IP should be HELO-ing as the sending domain and the PTR should also point to \
                 the hosted domain for proper SMTP authentication; HELO should match PTR and sender domain should match Helo string."
-
                 }
+
 # access token git write: XsG1NRAmCzYxYcMWC73g

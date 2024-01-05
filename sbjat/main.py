@@ -42,6 +42,9 @@ def main():
         logdata.logger.info("No valid Tickets")
     ##testing/debuging
     getsbrs.ticketdata('COG-69847')
+    #getsbrs.ticketdata('COG-69870')
+    #getsbrs.ticketdata('COG-69929')
+
 
 if __name__ == '__main__':
     main()
