@@ -4,11 +4,14 @@ from jira import JIRA
 
 def assign(ticket):
     options     = {"server": "https://jira.talos.cisco.com"}
-    jira = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
-    #issue       = jira.issue(ticket)
-    jira.assign_issue(ticket, 'wikoeste')
-    # priority    = issue.fields.priority.name
-    # issue.update(priority={'name': 'P4'}) # set to a p4
+    jira        = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
+    issue = jira.issue(ticket)
+    priority    = issue.fields.priority.name
+    lbl         = "te-sbjat"
+    jira.assign_issue(ticket, 'wikoeste')   # assign the ticket to me
+    issue.update(labels={lbl})              # add the lbl that sbrs automation took this ticket
+    # issue.update(priority={'name': 'P3'}) # set to a p3
+
 
 def comment(ticket,data,rules,scr,ip):
     score   = None
