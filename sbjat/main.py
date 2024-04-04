@@ -10,23 +10,25 @@ from jira import JIRA
 import re
 
 def main():
+    clist,cmtips   = ([],[])
+    # log data
+    logdata.logger.info("Tool run by {}".format(settings.uname))
     print("\n===Senderbase Jira Automation Tool (sbjat)==="+settings.version)
     #Collect all SBRS tickets in the last day
     options = {"server": "https://jira.talos.cisco.com"}
-    #jira    = JIRA(basic_auth=('wikoeste', settings.cecpw), options=options)
     jira    = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
-    #qry    = 'project = COG AND cf[12380] in cascadeOption(14037) AND created >= -24d AND assignee in (EMPTY) ORDER BY key ASC'
     qry    = 'project = COG AND issuetype = SBRS AND created >= -1d AND assignee in (EMPTY) ORDER BY key ASC'
-    sbrs    = jira.search_issues(qry, maxResults=10) # get max 10 results
-    logdata.logger.info("Tool run by {}".format(settings.uname))
-    clist,cmtips   = ([],[])
+    # get max 10 results
+    sbrs    = jira.search_issues(qry, maxResults=10)
     cases   = str(sbrs)
     cog     = re.compile("COG-.{5}")
-    for match in re.findall(cog, cases): # extract the cog ticket id cog-12345
+    # extract the cog ticket id cog-12345
+    for match in re.findall(cog, cases): #
         clist.append(match)
     totalsbrstickets = len(clist)
     print('Total sbrs cases in last day (24 hours) is {}'.format(totalsbrstickets))
     print(clist)
+    #log the tickets located
     logdata.logger.info(clist)
     print("=====")
     for i in clist:
@@ -41,10 +43,9 @@ def main():
         print("No valid Tickets")
         logdata.logger.info("No valid Tickets")
     ##testing/debuging
-    getsbrs.ticketdata('COG-69847')
+    #getsbrs.ticketdata('COG-69847')
     #getsbrs.ticketdata('COG-69870')
     #getsbrs.ticketdata('COG-69929')
-
 
 if __name__ == '__main__':
     main()

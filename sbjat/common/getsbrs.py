@@ -1,4 +1,5 @@
 import ipaddress
+import logging
 
 from sbjat.common import settings,postjira,juno,logdata
 from sbjat import main as menu
@@ -115,26 +116,26 @@ def score(ip):
 
 #Entered from main
 def ticketdata(ticket):
-    flag        = 0
-    ipvers      = None
-    ticketurl   = "https://jira.talos.cisco.com/browse/{}".format(ticket)
-    jiraAPI     = "https://jira.talos.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
-    fields      = "&fields=description,summary,customfield_20042,customfield_20043,customfield_20380" # old jira.sco filed for finding ips customfield_12385"
-    headers     = {'Content-type': 'application/json'}
-    #response    = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
-    response    = requests.get(jiraAPI+fields, headers=headers, auth=(settings.uname, settings.jiraKey), verify=False)
+    extractedips    = []
+    flag            = 0
+    ipvers          = None
+    ticketurl       = "https://jira.talos.cisco.com/browse/{}".format(ticket)
+    jiraAPI         = "https://jira.talos.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
+    fields          = "&fields=description,summary,labels,customfield_20042,customfield_20043,customfield_20380" # old jira.sco filed for finding ips customfield_12385"
+    headers         = {'Content-type': 'application/json'}
+    #response        = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
+    response        = requests.get(jiraAPI+fields, headers=headers, auth=(settings.uname, settings.jiraKey), verify=False)
     data,rules,scr,date,match = (None,None,None,None,None)
     if response.status_code == 200:
         jsondict = response.json()
-        #print('custom jira fields jql search for cog ticket', json.dumps(jsondict, indent=2))
-        extractedips = []
+        #print('=jql search results=\n', json.dumps(jsondict, indent=2))
         desc    = jsondict['issues'][0]['fields']['description']
         smry    = jsondict['issues'][0]['fields']['summary']
         cf20042 = jsondict['issues'][0]['fields']['customfield_20042']
         cf20043 = jsondict['issues'][0]['fields']['customfield_20043'] #ipfield
         cf20380 = jsondict['issues'][0]['fields']['customfield_20380'] #rule hits
-        #rulehits = jsondict['issues'][0]['fields']['customfield_12385']
-        #format desc and smry to not have line breaks tabs and spacing
+        labels  = jsondict['issues'][0]['fields']['labels']
+        # format desc and smry to not have line breaks tabs and spacing
         frmtdesc    = desc.translate(str.maketrans(' ', ' ', '\n\t\r'))
         frmtsmry    = smry.translate(str.maketrans(' ', ' ', '\n\t\r'))
         # regex to find ipv4 addresses
@@ -181,7 +182,7 @@ def ticketdata(ticket):
                     logdata.logger.info(str(date) + ":" + str(ipv6results)+str(geoipdata))
                     # post comment to jira and update ticket fields
                     flag = postjira.comment(ticket,data,str(v6rules),scr,i)
-                else: #ipv4 addres and get the ipv4 data
+                elif valid_ipv4(i): #ipv4 addres and get the ipv4 data
                     scr, rules, pbln, ip, date = score(i)  # send the ip list to get the SBRS score,rulehits, and possible pbl, of each ip from the ticket summary or description
                     geoipdata = getgeoip(i)
                     data = ("\n==SBRS Threat Intel==\n" \
@@ -197,6 +198,9 @@ def ticketdata(ticket):
                     logdata.logger.info(str(date)+":"+str(data))
                     # post comment to jira and update ticket fields
                     flag = postjira.comment(ticket,data,str(rules),scr,i)
+                else:
+                    print(i,"is not a valid IPv4 or v6 address")
+                    logdata.logger.info(ticket,"does not contain a valid IPv4 or v6 address:", i)
             #Resolve the ticket is possible via automation
             # if this is a geoip ticket then set to 3 and do not auto resolve.
             for m in settings.geolocation:

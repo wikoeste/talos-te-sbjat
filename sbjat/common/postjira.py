@@ -5,12 +5,8 @@ from jira import JIRA
 def assign(ticket):
     options     = {"server": "https://jira.talos.cisco.com"}
     jira        = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
-    issue = jira.issue(ticket)
-    priority    = issue.fields.priority.name
-    lbl         = "te-sbjat"
+    issue 	    = jira.issue(ticket)
     jira.assign_issue(ticket, 'wikoeste')   # assign the ticket to me
-    issue.update(labels={lbl})              # add the lbl that sbrs automation took this ticket
-    # issue.update(priority={'name': 'P3'}) # set to a p3
 
 
 def comment(ticket,data,rules,scr,ip):
@@ -24,17 +20,17 @@ def comment(ticket,data,rules,scr,ip):
     # if we have a list of scores get avg if scr is none
     if scr is None:
         score = 0.0
-    elif type(scr) == list and len(scr) > 0:
-        avg   = sum(scr)/len(scr)
-        score = avg
+    elif type(scr) == list:
+        if len(scr) > 0:
+            avg   = sum(scr)/len(scr)
+            score = avg
     else:
-        score = 0.0
+        score = scr
     # return boiler plate based on score these are public jira comments
-    if float(score) >= -1.9:
-        jira.add_comment(ticket, ip +": " + settings.boilerplates["recovered"])
-        return 1
-    elif ("RsH" or "RhM") in rules and float(score) <= -2.0:
-        jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
+    if ("RsM" or "RvN") in rules:
+        print(float(score))
+        if float(score) <= -2.0:
+            jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
         return 1
     elif "Gry" in rules and float(score) <= -2.0:
         jira.add_comment(ticket,ip +": " +  settings.boilerplates["grey"])
@@ -42,50 +38,58 @@ def comment(ticket,data,rules,scr,ip):
     elif ("Cbl" or "Pbl" or "Sbl" or "Css") in rules and float(score) <= -2.0:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
         return 1
-    elif "Ce" or "Ve" in rules and float(score) <= -2.0:
-        # private comment
+    elif "Ce" or "Ve" in rules and float(score) <=-2.0: # private comment
         jira.add_comment(ticket, ip + ": " + "IP listed in http://enemieslist.com/classifications/",
-            visibility={'type': 'role', 'value': 'Project Developer'})
+        visibility={'type': 'role', 'value': 'Project Developer'})
         return 2
-    elif "Cp1" or "Cp2" or "Vp1" or "Vp2" in rules and float(score) <= -2.0:
+    elif ("Cp1" or "Cp2" or "Vp1" or "Vp2") in rules and float(score) <= -2.0:
         jira.add_comment(ticket, ip + ": " + settings.boilerplates["cp1"])
         return 1
-    elif "Ivn" or "Ivm" and float(score) <= -2.0:
-        # private comment
+    elif ("Ivn" or "Ivm") and float(score) <= -2.0: # private comment
         jira.add_comment(ticket, ip + ": " + "listed on Invalument: https://www.invaluement.com/",
             visibility={'type': 'role', 'value': 'Project Developer'})
         return 2
-    elif "Vu" or "Cu" in rules and float(score) <= -2.0:
-        # private comment
+    elif ("Vu" or "Cu") in rules and float(score) <= -2.0: # private comment
         jira.add_comment(ticket, ip + ": " + "a domain associated with this IP are listed in the URIDB feed.",
             visibility={'type': 'role', 'value': 'Project Developer'})
         return 2
-    elif "Rtm" in rules and float(score) <= -2.0:
-        # private comment
-        jira.add_comment(ticket, ip + ": " + "is blocked by a Reptool entry",
+    elif "Rtm" in rules: # private comment
+        if float(score) <= -2.0:
+            jira.add_comment(ticket, ip + ": " + "is blocked by a Reptool entry",
             visibility = {'type': 'role', 'value': 'Project Developer'})
         return 2
-    elif float(score) <= -2.0:
-        # private comment
+    elif float(score) <= -2.0: # private comment
         jira.add_comment(ticket,"Your IP, {}".format(ip)+ " has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules),
             visibility = {'type': 'role', 'value': 'Project Developer'})
         return 2
+    elif float(score) > -1.9:
+        jira.add_comment(ticket, ip + ": " + settings.boilerplates["recovered"])
+        return 1
     else:
         # private comment
         jira.add_comment(ticket, scr +","+rules, visibility={'type': 'role', 'value': 'Project Developer'})
         return 2
 
 def resolveclose(ticket,flag):
+    print(ticket,flag)
+    logdata.logger.infor(ticket,flag)
     options     = {"server": "https://jira.talos.cisco.com"}
     jira        = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
     issue       = jira.issue(ticket)
     transitions = jira.transitions(issue)
     resol       = jira.resolutions()
-    status = issue.fields.status
+    status      = issue.fields.status
+    ###DEBUG PRINTS###
     #print(resol)
     #print(transitions)
     #print([(t['id'], t['name']) for t in transitions])
     #print("case status is", str(status))
+    #################
+    #Append the te labels for metrics
+    issue.fields.labels.append(u'te-sbjat')
+    issue.fields.labels.append(u'te-automation')
+    issue.update(fields={"labels":issue.fields.labels})
+    print(issue.fields.labels)
     ###############
     #Setting the ticket to resolved or not
     #If the ticket is geoip do not close
@@ -97,7 +101,6 @@ def resolveclose(ticket,flag):
     # Resolve the issue and set resolution to close is status is not cog investigating
     if flag == 3:  # geolocation ticket
         jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
-        logdata.logger.info(settings.uname, "COG-Investigating for geolocation issue")
         if 'Investigating' not in str(status):
             jira.transition_issue(issue, '721')
     #Below are not geolocation and will be auto resolved if possible

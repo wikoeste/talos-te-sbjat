@@ -3,6 +3,10 @@
 # Author: wikoeste
 
 # Release Notes
+1.6
+fixed error if there is a non ip formated entry 
+fixed auto resolve err
+
 1.5
 added geoip data
 added auto resolution to the tickets
