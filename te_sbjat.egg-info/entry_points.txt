@@ -1,0 +1,2 @@
+[console_scripts]
+te-sbjat = sbjat.main:main

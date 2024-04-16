@@ -4,8 +4,10 @@
 
 # Release Notes
 1.6
-fixed error if there is a non ip formated entry 
+fixed error if there is a non ip formatted entry 
 fixed auto resolve err
+fixed comment error for enimeieslist.com and not the correct boilerplate
+added option to ignore lines starting with # in profiles
 
 1.5
 added geoip data
