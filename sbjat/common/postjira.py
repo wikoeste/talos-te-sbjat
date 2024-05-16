@@ -92,7 +92,7 @@ def resolveclose(ticket,flag):
     ###DEBUG PRINTS###
     #print(resol)
     #print(transitions)
-    print([(t['id'], t['name']) for t in transitions])
+    #print([(t['id'], t['name']) for t in transitions])
     #print("case status is", str(status))
     #################
     #Append the te labels for metrics
@@ -119,9 +119,10 @@ def resolveclose(ticket,flag):
         if 'Pending' in str(status) or 'Open' in str(status):
             jira.transition_issue(issue,'5',resolution={'id': '1'})
             logdata.logger.info(str(ticket) + "; Resolved Fixed")
-    elif flag == 1 and 'Investigating' in str(status):
-        jira.transition_issue(issue,'741',resolution={'id':'1'})
-        logdata.logger.info(settings.uname +"; "+str(ticket)+'; Resolved')
+        elif 'Investigating' in str(status):
+            jira.transition_issue(issue,'741',resolution={'id':'1'})
+            logdata.logger.info(settings.uname +"; "+str(ticket)+'; Resolved')
+    # if the flag is 2 or not set, we will keep the ticket open for analysis
     elif flag == 2:
         jira.add_comment(ticket, "Investigating the issue. Update to follow")
         logdata.logger.info(settings.uname +"; Investigating")
