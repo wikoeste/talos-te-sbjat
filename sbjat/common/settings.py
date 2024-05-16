@@ -13,8 +13,8 @@ def getKey(keyname):                        # take the search keyname and return
         fname = osx
     with open(fname, 'r') as fp:
         lines = fp.read().splitlines()
-        if not lines.startswith('#'):
-            for l in lines:
+        for l in lines:
+            if '#' not in lines:
                 if keyname.upper() in l:
                     match = l
     key = re.sub(r'.*=','',match)
@@ -22,14 +22,14 @@ def getKey(keyname):                        # take the search keyname and return
     return key
 #Get user creds and API Keys at start
 uname        = getpass.getuser()
-cecpw        = "the$AM@dm1n^"
+cecpw        = ""
 sherlockKey  = getKey("sherlock")
 sherlock     = 'https://sherlock.ironport.com/webapi/'
 juno         = 'https://prod-juno-search-api.sv4.ironport.com/'
 junoKey      = getKey("jupiter")
 jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
-version      = '1.6'
-geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown']
+version      = '1.6.1'
+geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown','GeoBlock','GeoIP']
 # SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \
                 In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week \

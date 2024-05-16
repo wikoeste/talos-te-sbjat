@@ -3,6 +3,10 @@
 # Author: wikoeste
 
 # Release Notes
+1.6.1
+fixed post jira issue with transition and resolving tickets
+added additional logging for troubleshooting
+
 1.6
 fixed error if there is a non ip formatted entry 
 fixed auto resolve err

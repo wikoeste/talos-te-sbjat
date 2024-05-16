@@ -43,6 +43,8 @@ def main():
         print("No valid Tickets")
         logdata.logger.info("No valid Tickets")
     ##testing/debuging
+    #getsbrs.ticketdata('COG-72446')
+    #getsbrs.ticketdata('COG-72386')
     #getsbrs.ticketdata('COG-71781')
     #getsbrs.ticketdata('COG-69847')
     #getsbrs.ticketdata('COG-69870')
