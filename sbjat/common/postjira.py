@@ -109,11 +109,12 @@ def resolveclose(ticket,flag):
     # else do not close
     ##################
     print('the flag is ', str(flag))
+
     # Resolve the issue and set resolution to close is status is not cog investigating
     if flag == 3:  # geolocation ticket
         jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
-        if 'Investigating' not in str(status):
-            jira.transition_issue(issue, '721')
+        logdata.logger.info(str(ticket) + ";"+settings.uname+"; Investigating the reported Geolocation issue.")
+
     #Below are not geolocation and will be auto resolved if possible
     elif flag == 1:
         if 'Pending' in str(status) or 'Open' in str(status):
