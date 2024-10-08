@@ -15,7 +15,7 @@ def comment(ticket,data,rules,scr,ip):
     jira    = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
 
     # private comment of sbrs data
-    comment = jira.add_comment(ticket, str(data), visibility={'type': 'role', 'value': 'Project Developer'})
+    jira.add_comment(ticket, str(data), visibility={'type': 'role', 'value': 'Project Developer'})
     issue   = jira.issue(ticket)
 
     # write the rule hits in COG-Hits in jira
@@ -30,45 +30,47 @@ def comment(ticket,data,rules,scr,ip):
             score = avg
     else:
         score = scr
-
     # return boiler plate based on score these are public jira comments
     if ("RsH" or "RhM") in rules:
-        print(float(score))
         if float(score) <= -5.0:
             jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
         return 1
     elif "Gry" in rules and float(score) <= -7.0:
         jira.add_comment(ticket,ip +": " +  settings.boilerplates["grey"])
         return 2
-    elif ("Cbl" or "Pbl" or "Sbl" or "Css") in rules and float(score) <= -2.0:
+    elif ("Cbl" or "Pbl" or "Sbl" or "Css") in rules:
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
         return 1
     elif ("psb" or "PSB") in rules: # private comment
-        jira.add_comment(ticket, ip + ": " + "IP listed in http://psbl.org",
-        visibility={'type': 'role', 'value': 'Project Developer'})
-        return 2
+        if float(score) == -2.0:
+            jira.add_comment(ticket, ip + ": " + "IP listed in http://psbl.org",
+                visibility={'type': 'role', 'value': 'Project Developer'})
+            return 2
     elif "Ce" or "Ve" in rules: # private comment
         if float(score) <=-2.0:
             jira.add_comment(ticket, ip + ": " + "IP listed in http://enemieslist.com/classifications/",
-            visibility={'type': 'role', 'value': 'Project Developer'})
+                visibility={'type': 'role', 'value': 'Project Developer'})
         return 2
-    elif ("Cp1" or "Cp2" or "Vp1" or "Vp2") in rules and float(score) <= -2.0:
-        jira.add_comment(ticket, ip + ": " + settings.boilerplates["cp1"])
-        return 1
-    elif ("Ivn" or "Ivm") and float(score) <= -2.0: # private comment
-        jira.add_comment(ticket, ip + ": " + "listed on Invalument: https://www.invaluement.com/",
-        visibility={'type': 'role', 'value': 'Project Developer'})
-        return 2
-    elif ("Vu" or "Cu") in rules and float(score) <= -2.0: # private comment
-        jira.add_comment(ticket, ip + ": " + "a domain associated with this IP are listed in the URIDB feed.",
-            visibility={'type': 'role', 'value': 'Project Developer'})
-        return 2
+    elif ("Cp1" or "Cp2" or "Vp1" or "Vp2") in rules:
+        if float(score) <= -2.0:
+            jira.add_comment(ticket, ip + ": " + settings.boilerplates["cp1"])
+            return 1
+    elif ("Ivn" or "Ivm") in rules:
+        if float(score) <= -2.0: # private comment
+            jira.add_comment(ticket, ip + ": " + "listed on Invalument: https://www.invaluement.com/",
+                visibility={'type': 'role', 'value': 'Project Developer'})
+            return 2
+    elif ("Vu" or "Cu") in rules:
+        if float(score) <= -2.0: # private comment
+            jira.add_comment(ticket, ip + ": " + "a domain associated with this IP are listed in the URIDB feed.",
+                visibility={'type': 'role', 'value': 'Project Developer'})
+            return 2
     elif "Rtm" in rules: # private comment
         if float(score) <= -2.0:
             jira.add_comment(ticket, ip + ": " + "is blocked by a Reptool entry",
-            visibility = {'type': 'role', 'value': 'Project Developer'})
+                visibility = {'type': 'role', 'value': 'Project Developer'})
             logdata.logger.info(ticket, ip + ": " + "is blocked by a Reptool entry")
-        return 2
+            return 2
     elif float(score) <= -2.0: # private comment
         jira.add_comment(ticket,"Your IP, {}".format(ip)+ " has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules),
         visibility = {'type': 'role', 'value': 'Project Developer'})
@@ -114,7 +116,6 @@ def resolveclose(ticket,flag):
     if flag == 3:  # geolocation ticket
         jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
         logdata.logger.info(str(ticket) + ";"+settings.uname+"; Investigating the reported Geolocation issue.")
-
     #Below are not geolocation and will be auto resolved if possible
     elif flag == 1:
         if 'Pending' in str(status) or 'Open' in str(status):

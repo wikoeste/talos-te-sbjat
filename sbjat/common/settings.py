@@ -27,8 +27,10 @@ sherlockKey  = getKey("sherlock")
 sherlock     = 'https://sherlock.ironport.com/webapi/'
 juno         = 'https://prod-juno-search-api.sv4.ironport.com/'
 junoKey      = getKey("jupiter")
-jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
-version      = '1.6.1'
+# invalid due to no active license in jira ui
+#jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
+jiraKey      = "the$AM@dm1n^"
+version      = '1.6.2'
 geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown','GeoBlock','GeoIP']
 # SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \

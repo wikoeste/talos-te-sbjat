@@ -1,11 +1,19 @@
-# Senderbase Jira Automation Tool
-# Tool to read, analyze, respnde, and resolve jira sbrs case types
-# Author: wikoeste
+# Senderbase/IPedia, Jira Ticket Automation Tool
+####################
+# Tool to read, analyze, respond, and resolve 
+# jira sbrs case types through automation is possible
 
+# Author: wikoeste
+#####
 # Release Notes
+1.6.2
+fixed post jira err with, spamhaus, removed the line, if float(score) <= -2.0 or float(score == -10.0):,
+
 1.6.1
 fixed post jira issue with transition and resolving tickets
 added additional logging for troubleshooting
+fixed try except value error with invalid ips in the array
+fixed automated response for spamhaus and enimes in postjira
 
 1.6
 fixed error if there is a non ip formatted entry 

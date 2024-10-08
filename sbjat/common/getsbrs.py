@@ -87,12 +87,15 @@ def cidrscore(ips,ticket):
 #Entered from ticketdata to get ipv4 socre
 def score(ip):
     date = time.strftime("%Y-%m-%d %H:%M")
-    revip = ip_address(ip).reverse_pointer
-    revip = re.sub('.in-addr.arpa', '', revip)
-    sbrsurl = revip + '.v1x2s.rf-adfe2ko9.senderbase.org'
-    digcmd = 'dig +noall +answer TXT ' + sbrsurl
-    proc = subprocess.Popen(shlex.split(digcmd), stdout=subprocess.PIPE)
-    out, err = proc.communicate()
+    try:
+        revip = ip_address(ip).reverse_pointer
+        revip = re.sub('.in-addr.arpa', '', revip)
+        sbrsurl = revip + '.v1x2s.rf-adfe2ko9.senderbase.org'
+        digcmd = 'dig +noall +answer TXT ' + sbrsurl
+        proc = subprocess.Popen(shlex.split(digcmd), stdout=subprocess.PIPE)
+        out, err = proc.communicate()
+    except ValueError:
+        out = ''
     score = 0.0
     rules, pblname = ("--", "--")
     # Parse the returned dig data to dispaly the rules, and scores.
@@ -197,26 +200,24 @@ def ticketdata(ticket):
                     # post comment to jira and update ticket fields
                     flag = postjira.comment(ticket,data,str(rules),scr,i)
                 else:
-                    print(i,"is not a valid IPv4 or v6 address")
-                    logdata.logger.info(ticket,"does not contain a valid IPv4 or v6 address:", i)
+                    print(str(i) +", is not a valid IPv4 or v6 address")
+                    logdata.logger.info(str(ticket)+"; does not contain a valid IPv4 or v6 address: "+i)
                     logdata.logger.info(ips)
             #Resolve the ticket is possible via automation
             # if this is a geoip ticket then set to 3 and do not auto resolve.
             for m in settings.geolocation:
                 if str(m) in str(smry):
-                    print(ticket, "Investigating the reported Geolocation issue. Update to follow")
+                    #print(ticket, "Investigating the reported Geolocation issue. Update to follow")
                     #jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
                     flag = 3
                 if str(m) in str(desc):
-                    print(ticket, "Investigating the reported Geolocation issue. Update to follow")
+                    #print(ticket, "Investigating the reported Geolocation issue. Update to follow")
                     #jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
                     flag = 3
             postjira.resolveclose(ticket, flag)  # update resolution for each ip
         else: # no IP addresses found in ticket
             err = "\nNo valid IPv4 or IPv6 Addresses found in IP fields of the ticket"
             logdata.logger.info(str(date)+":"+str(err))
-            print(err)
     else:
         err = "\nHTTP ERROR: {}".format(response.status_code),ticket + " Jira API Search"
         logdata.logger.info(str(date)+":"+str(err))
-        print(err)
