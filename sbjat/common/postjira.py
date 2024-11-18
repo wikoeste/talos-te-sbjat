@@ -32,7 +32,7 @@ def comment(ticket,data,rules,scr,ip):
         score = scr
     # return boiler plate based on score these are public jira comments
     if ("RsH" or "RhM") in rules:
-        if float(score) <= -5.0:
+        if float(score) <= -2.0:
             jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
         return 1
     elif "Gry" in rules and float(score) <= -7.0:
@@ -42,7 +42,7 @@ def comment(ticket,data,rules,scr,ip):
         jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
         return 1
     elif ("psb" or "PSB") in rules: # private comment
-        if float(score) == -2.0:
+        if float(score) == -2.0 or float(score <= -2.0):
             jira.add_comment(ticket, ip + ": " + "IP listed in http://psbl.org",
                 visibility={'type': 'role', 'value': 'Project Developer'})
             return 2
@@ -111,7 +111,9 @@ def resolveclose(ticket,flag):
     # else do not close
     ##################
     print('the flag is ', str(flag))
-
+    #transitions = jira.transitions(issue, expand="transitions.fields")
+    #for t in transitions:
+    #    print(t)
     # Resolve the issue and set resolution to close is status is not cog investigating
     if flag == 3:  # geolocation ticket
         jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
@@ -123,7 +125,13 @@ def resolveclose(ticket,flag):
             logdata.logger.info(str(ticket) + "; Resolved Fixed")
         elif 'Investigating' in str(status):
             jira.transition_issue(issue,'741',resolution={'id':'1'})
-            logdata.logger.info(settings.uname +"; "+str(ticket)+'; Resolved')
+            logdata.logger.info(settings.uname +"; "+str(ticket)+'; Resolved Fixed')
+        elif 'Reopened' in str(status):
+            jira.transition_issue(issue,'5',resolution={'id':'1'})
+            logdata.logger.info(settings.uname +"; "+str(ticket)+'; Resolved Fixed')
+        else:
+            jira.add_comment(ticket, "Investigating the issue. Update to follow")
+            logdata.logger.info(settings.uname + "; Investigating")
     # if the flag is 2 or not set, we will keep the ticket open for analysis
     elif flag == 2:
         jira.add_comment(ticket, "Investigating the issue. Update to follow")

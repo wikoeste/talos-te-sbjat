@@ -1,6 +1,6 @@
 import getpass,re,os.path,queue
 def init():                                 # Global List of variables
-    global uname,cecpw,sherlock,sherlockKey,boilerplates,version,jiraKey
+    global uname,cecpw,sherlock,sherlockKey,boilerplates,version,jiraKey,jirapw
     global juno,junoKey,geolocation
 
 def getKey(keyname):                        # take the search keyname and return the appropriate api key
@@ -28,9 +28,9 @@ sherlock     = 'https://sherlock.ironport.com/webapi/'
 juno         = 'https://prod-juno-search-api.sv4.ironport.com/'
 junoKey      = getKey("jupiter")
 # invalid due to no active license in jira ui
-#jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
-jiraKey      = "the$AM@dm1n^"
-version      = '1.6.2'
+jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
+jirapw       = "the$AM@dm1n^"
+version      = '1.6.3'
 geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown','GeoBlock','GeoIP']
 # SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \

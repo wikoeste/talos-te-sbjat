@@ -1,6 +1,4 @@
-import ipaddress
-import logging
-
+import ipaddress,logging
 from sbjat.common import settings,postjira,juno,logdata
 from sbjat import main as menu
 from ipaddress import ip_address, IPv4Address
@@ -207,12 +205,8 @@ def ticketdata(ticket):
             # if this is a geoip ticket then set to 3 and do not auto resolve.
             for m in settings.geolocation:
                 if str(m) in str(smry):
-                    #print(ticket, "Investigating the reported Geolocation issue. Update to follow")
-                    #jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
                     flag = 3
                 if str(m) in str(desc):
-                    #print(ticket, "Investigating the reported Geolocation issue. Update to follow")
-                    #jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
                     flag = 3
             postjira.resolveclose(ticket, flag)  # update resolution for each ip
         else: # no IP addresses found in ticket
