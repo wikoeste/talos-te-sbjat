@@ -5,6 +5,12 @@
 
 # Author: wikoeste
 #####
+# 1.6.4
+fixed loop issue with resolving a ticket as geoip when it is not
+
+# 1.6.3
+updated the log in to use my cec as a backup
+
 # Release Notes
 1.6.2
 fixed post jira err with, spamhaus, removed the line, if float(score) <= -2.0 or float(score == -10.0):,

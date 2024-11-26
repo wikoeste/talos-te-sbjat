@@ -1,13 +1,12 @@
 from sbjat.common import settings
 from sbjat.common import logdata
 from jira import JIRA
-
+#######################
 def assign(ticket):
     options     = {"server": "https://jira.talos.cisco.com"}
     jira        = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
     issue 	    = jira.issue(ticket)
     jira.assign_issue(ticket, 'wikoeste')   # assign the ticket to me
-
 
 def comment(ticket,data,rules,scr,ip):
     score   = None

@@ -124,7 +124,6 @@ def ticketdata(ticket):
     jiraAPI         = "https://jira.talos.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
     fields          = "&fields=description,summary,labels,customfield_20042,customfield_20043,customfield_20380" # old jira.sco filed for finding ips customfield_12385"
     headers         = {'Content-type': 'application/json'}
-    #response        = requests.get(jiraAPI+fields, headers=headers, auth=('wikoeste', settings.cecpw), verify=False)
     response        = requests.get(jiraAPI+fields, headers=headers, auth=(settings.uname, settings.jiraKey), verify=False)
     data,rules,scr,date,match = (None,None,None,None,None)
     if response.status_code == 200:
@@ -201,14 +200,15 @@ def ticketdata(ticket):
                     print(str(i) +", is not a valid IPv4 or v6 address")
                     logdata.logger.info(str(ticket)+"; does not contain a valid IPv4 or v6 address: "+i)
                     logdata.logger.info(ips)
-            #Resolve the ticket is possible via automation
-            # if this is a geoip ticket then set to 3 and do not auto resolve.
-            for m in settings.geolocation:
-                if str(m) in str(smry):
-                    flag = 3
-                if str(m) in str(desc):
-                    flag = 3
-            postjira.resolveclose(ticket, flag)  # update resolution for each ip
+                #Resolve the ticket is possible via automation
+                # if this is a geoip ticket then set to 3 and do not auto resolve.
+                if flag == 0:
+                    for m in settings.geolocation:
+                        if str(m) in str(smry):
+                            flag = 3
+                        if str(m) in str(desc):
+                            flag = 3
+                postjira.resolveclose(ticket, flag)  # update resolution for each ip
         else: # no IP addresses found in ticket
             err = "\nNo valid IPv4 or IPv6 Addresses found in IP fields of the ticket"
             logdata.logger.info(str(date)+":"+str(err))

@@ -30,7 +30,7 @@ junoKey      = getKey("jupiter")
 # invalid due to no active license in jira ui
 jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
 jirapw       = "the$AM@dm1n^"
-version      = '1.6.3'
+version      = '1.6.4'
 geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown','GeoBlock','GeoIP']
 # SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \
