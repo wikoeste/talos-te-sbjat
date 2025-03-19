@@ -122,7 +122,7 @@ def ticketdata(ticket):
     ipvers          = None
     ticketurl       = "https://jira.talos.cisco.com/browse/{}".format(ticket)
     jiraAPI         = "https://jira.talos.cisco.com/rest/api/2/search?jql=key={}".format(ticket)
-    fields          = "&fields=description,summary,labels,customfield_20042,customfield_20043,customfield_20380" # old jira.sco filed for finding ips customfield_12385"
+    fields          = "&fields=description,summary,labels,customfield_20042,customfield_20043,customfield_20380"
     headers         = {'Content-type': 'application/json'}
     response        = requests.get(jiraAPI+fields, headers=headers, auth=(settings.uname, settings.jiraKey), verify=False)
     data,rules,scr,date,match = (None,None,None,None,None)
@@ -163,7 +163,6 @@ def ticketdata(ticket):
                 if m[0] != 'd:':
                     extractedips.append(m[0])
         ips  = list(set(extractedips)) # remove duplicate ips
-        print(ips)
         if 'd' in ips:
             ips.remove(('d'))
         # Check the summary and description for CIDR entries
@@ -171,6 +170,7 @@ def ticketdata(ticket):
             cidrscore(match, ticket)
         if re.search(r'/.{2}', desc) is True:  # this is a cidr entry in description
             cidrscore(match, ticket)
+        #NO cidr so analyze each ip
         #if there are ip address then get the sbrs data
         if len(ips) > 0:
             for i in ips:
@@ -181,11 +181,11 @@ def ticketdata(ticket):
                     logdata.logger.info(str(date) + ":" + str(ipv6results)+str(geoipdata))
                     # post comment to jira and update ticket fields
                     flag = postjira.comment(ticket,data,str(v6rules),scr,i)
+                    settings.results.extend(ticket,data,str(rules),scr,i)
                 elif valid_ipv4(i): #ipv4 addres and get the ipv4 data
                     scr, rules, pbln, ip, date = score(i)  # send the ip list to get the SBRS score,rulehits, and possible pbl, of each ip from the ticket summary or description
                     geoipdata = getgeoip(i)
                     data = ("\n==SBRS Threat Intel==\n" \
-                    #"IP Addresses Submitted: {}".format(ips)+"\n \
                     "===RealTime Threat Analysis===\n \
                     IP Analyzed: {}".format(i) + "\n \
                     Date: {}".format(date)+"\n \
@@ -196,11 +196,13 @@ def ticketdata(ticket):
                     logdata.logger.info(str(date)+":"+str(data))
                     # post comment to jira and update ticket fields
                     flag = postjira.comment(ticket,data,str(rules),scr,i)
-                else:
+                    logdata.logger.info("Flag for resolution, "+str(flag))
+                    settings.results.append(ticket)
+                    settings.results.extend(data,str(rules),scr,i)
+                else:                                                       # NO valid IP address
                     print(str(i) +", is not a valid IPv4 or v6 address")
                     logdata.logger.info(str(ticket)+"; does not contain a valid IPv4 or v6 address: "+i)
-                    logdata.logger.info(ips)
-                #Resolve the ticket is possible via automation
+
                 # if this is a geoip ticket then set to 3 and do not auto resolve.
                 if flag == 0:
                     for m in settings.geolocation:
@@ -208,10 +210,16 @@ def ticketdata(ticket):
                             flag = 3
                         if str(m) in str(desc):
                             flag = 3
-                postjira.resolveclose(ticket, flag)  # update resolution for each ip
+                # should think how to handle multiple ips storing all in a dictionary or list
+                if settings.results is not None:
+                    logdata.logger.info(str(date+":"+str(settings.results)))
+                # Resolve the ticket is possible via automation
+                # update resolution for the last analyzed IP
+                postjira.resolveclose(ticket, flag)
         else: # no IP addresses found in ticket
             err = "\nNo valid IPv4 or IPv6 Addresses found in IP fields of the ticket"
             logdata.logger.info(str(date)+":"+str(err))
+    # HTTP ERR to jira api
     else:
         err = "\nHTTP ERROR: {}".format(response.status_code),ticket + " Jira API Search"
         logdata.logger.info(str(date)+":"+str(err))
