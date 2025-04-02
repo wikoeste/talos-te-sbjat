@@ -1,4 +1,4 @@
-# Senderbase/IPedia, Jira Ticket Automation Tool\
+# Senderbase/IPedia, Jira Ticket Automation Tool
 
 Tool to read, analyze, respond, and resolve jira sbrs case types through automation is possible
 
@@ -45,7 +45,7 @@ changed to use api over cec / removed cec from settings\
 fixed error with multiple ips not printing/writing results\
 disabled #postjira.resolveclose()
 
-1.1
+1.1\
 updated api key error found on test and prod tepot hosts\
 changed from jira.sco to jira.talos for 01/03/2023 queue change\
 updated the boiler plates for ipedia changes\
