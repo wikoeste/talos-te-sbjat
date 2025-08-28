@@ -3,6 +3,8 @@
 Tool to read, analyze, respond, and resolve jira sbrs case types through automation is possible
 
 # Release Notes
+1.6.5\
+fixed error getsbrs.py line 201, list extend takes one arg not 4 (COG-79857)
 
 1.6.4\
 fixed loop issue with resolving a ticket as geoip when it is not

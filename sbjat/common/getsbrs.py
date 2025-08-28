@@ -198,7 +198,7 @@ def ticketdata(ticket):
                     flag = postjira.comment(ticket,data,str(rules),scr,i)
                     logdata.logger.info("Flag for resolution, "+str(flag))
                     settings.results.append(ticket)
-                    settings.results.extend(data,str(rules),scr,i)
+                    settings.results.extend([data,str(rules),scr,i])        # fixed extend error by adding []
                 else:                                                       # NO valid IP address
                     print(str(i) +", is not a valid IPv4 or v6 address")
                     logdata.logger.info(str(ticket)+"; does not contain a valid IPv4 or v6 address: "+i)
