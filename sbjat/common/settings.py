@@ -1,7 +1,7 @@
 import getpass,re,os.path,queue
 def init():                                 # Global List of variables
-    global uname,cecpw,sherlock,sherlockKey,boilerplates,version,jiraKey,jirapw
-    global juno,junoKey,geolocation, results
+    global uname,cecpw,sherlock,sherlockKey,boilerplates,version,jiraKey
+    global juno,junoKey,geolocation,results
 
 def getKey(keyname):                        # take the search keyname and return the appropriate api key
     match     = ''
@@ -14,9 +14,10 @@ def getKey(keyname):                        # take the search keyname and return
     with open(fname, 'r') as fp:
         lines = fp.read().splitlines()
         for l in lines:
-            if '#' not in lines:
-                if keyname.upper() in l:
-                    match = l
+            if l.startswith('#'):
+                pass
+            if keyname.upper() in l:
+                match = l
     key = re.sub(r'.*=','',match)
     key = re.sub(r'"', '', key)
     return key
@@ -28,15 +29,12 @@ sherlockKey  = getKey("sherlock")
 sherlock     = 'https://sherlock.ironport.com/webapi/'
 juno         = 'https://prod-juno-search-api.sv4.ironport.com/'
 junoKey      = getKey("jupiter")
+jiraKey	     = getKey("JRW")
 #results of all ips scores
 results = []
 
-#hard coded NOT GOOD IDEA
-jiraKey	     = "FlcPslVXxwFQ0QMYGF3chpi0fftY8SxRw56sFW"
-jirapw       = "the$AM@dm1n^"
-
 # Version
-version      = '1.6.5'
+version      = '1.6.6'
 
 # GEO Location string check
 geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown','GeoBlock','GeoIP']

@@ -3,11 +3,10 @@
 # Author: wikoeste
 from sbjat.common import settings
 settings.init()
-from sbjat.common import getsbrs
-from sbjat.common import postjira
-from sbjat.common import logdata
+from sbjat.common import getsbrs,postjira,logdata
 from jira import JIRA
-import re
+import re,requests
+requests.packages.urllib3.disable_warnings()
 
 def main():
     jira           = None
@@ -20,10 +19,7 @@ def main():
     try:
         jira    = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
     except:
-        try:
-            jira = JIRA(basic_auth=(settings.uname, settings.jirapw), options=options)
-        except:
-            print("Jira API auth ERROR; API Key and creds.")
+            print(f"Jira API auth ERROR; {settings.uname}, API Key {settings.jiraKey}.")
     finally:
         qry    = 'project = COG AND issuetype = SBRS AND created >= -1d AND assignee in (EMPTY) ORDER BY key ASC'
         # get max 10 results
@@ -38,7 +34,7 @@ def main():
         print(clist)
         #log the tickets located
         logdata.logger.info(clist)
-        print("=====")
+        print("\n\n")
         for i in clist:
             # take ownership, parse for data, analyze data,
             # return and post analysis results in private comment,
@@ -52,6 +48,7 @@ def main():
             logdata.logger.info("No valid Tickets")
         ##testing/debuging
         #getsbrs.ticketdata('COG-74286')
+        getsbrs.ticketdata('COG-80149')
 
 ########################
 if __name__ == '__main__':

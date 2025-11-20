@@ -3,6 +3,12 @@
 Tool to read, analyze, respond, and resolve jira sbrs case types through automation is possible
 
 # Release Notes
+1.6.6\
+added talos-te- to the program name for execution\
+updated settings to get JRW api key from profile\
+updated links for github\
+updated requirements in toml file
+
 1.6.5\
 fixed error getsbrs.py line 201, list extend takes one arg not 4 (COG-79857)
 

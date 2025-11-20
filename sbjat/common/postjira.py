@@ -1,4 +1,5 @@
 from sbjat.common import settings
+settings.init()
 from sbjat.common import logdata
 from jira import JIRA
 ######################

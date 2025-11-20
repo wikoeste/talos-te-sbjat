@@ -1,14 +1,14 @@
 from setuptools import setup
 
 setup(
-    name='te-sbjat',
-    version='1.6.5',
+    name='talos-te-sbjat',
+    version='1.6.6',
     packages=["sbjat", "sbjat.common"],
     description='Te - Senderbase Jira Automation Tool',
     author='Will Koester',
     author_email='wikoeste@cisco.com',
-    url='https://gitlab.vrt.sourcefire.com/wikoeste/sbjat.git',
+    url='https://github.com/wikoeste/talos-te-sbjat',
     entry_points={
-        'console_scripts':[ 'te-sbjat=sbjat.main:main'],
+        'console_scripts':[ 'talos-te-sbjat=sbjat.main:main'],
         },
 )

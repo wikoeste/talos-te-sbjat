@@ -1,4 +1,5 @@
 from sbjat.common import settings,logdata
+settings.init()
 import requests,json
 requests.packages.urllib3.disable_warnings()
 
