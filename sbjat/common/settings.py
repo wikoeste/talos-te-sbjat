@@ -32,13 +32,10 @@ junoKey      = getKey("jupiter")
 jiraKey	     = getKey("JRW")
 #results of all ips scores
 results = []
-
 # Version
-version      = '1.6.6'
-
+version      = '1.6.7'
 # GEO Location string check
 geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown','GeoBlock','GeoIP']
-
 # SBRS Boilerplates
 boilerplates = {"general":"If the spam problem is fixed as you believe it to be, then there should be no further complaints received. \
                 In general, once all issues have been addressed (fixed), reputation recovery can take anywhere from a few hours to just over one week \
@@ -75,5 +72,3 @@ boilerplates = {"general":"If the spam problem is fixed as you believe it to be,
                 This is a known behavior pattern with BOT infected systems. The IP should be HELO-ing as the sending domain and the PTR should also point to \
                 the hosted domain for proper SMTP authentication; HELO should match PTR and sender domain should match Helo string."
                 }
-
-# access token git write: XsG1NRAmCzYxYcMWC73g

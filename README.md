@@ -3,6 +3,11 @@
 Tool to read, analyze, respond, and resolve jira sbrs case types through automation is possible
 
 # Release Notes
+1.6.7\
+removed setup.py and using pyproject.toml to build and install\
+updated logging.info to logging.error\
+
+
 1.6.6\
 added talos-te- to the program name for execution\
 updated settings to get JRW api key from profile\

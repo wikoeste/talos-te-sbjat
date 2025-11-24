@@ -1,6 +1,5 @@
 # Senderbase Jira Automation Tool
 # Tool to read, analyze, respond, and resolve jira sbrs case types
-# Author: wikoeste
 from sbjat.common import settings
 settings.init()
 from sbjat.common import getsbrs,postjira,logdata
@@ -12,7 +11,7 @@ def main():
     jira           = None
     clist,cmtips   = ([],[])
     # log data
-    logdata.logger.info("Tool run by {}".format(settings.uname))
+    logdata.logger.error("Tool run by {}".format(settings.uname))
     print("\n===Senderbase Jira Automation Tool (sbjat)==="+settings.version)
     #Collect all SBRS tickets in the last day
     options = {"server": "https://jira.talos.cisco.com"}
@@ -33,11 +32,11 @@ def main():
         print('Total sbrs cases in last day (24 hours) is {}'.format(totalsbrstickets))
         print(clist)
         #log the tickets located
-        logdata.logger.info(clist)
+        logdata.logger.error(clist)
         print("\n\n")
         if len(clist) == 0:
             print("No valid SBRS Tickets")
-            logdata.logger.info("No valid Tickets")
+            logdata.logger.error("No valid Tickets")
         else:
             for i in clist:
                 # take ownership, parse for data, analyze data,
@@ -49,7 +48,7 @@ def main():
                 getsbrs.ticketdata(i)
         ##testing/debuging
         #getsbrs.ticketdata('COG-74286')
-        #getsbrs.ticketdata('COG-80149')
+        #dgetsbrs.ticketdata('COG-80149')
 
 ########################
 if __name__ == '__main__':

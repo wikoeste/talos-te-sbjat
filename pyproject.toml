@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools<81", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "talos-te-sbjat"
+authors = [
+    {name = "Will Koester", email = "wikoeste@cisco.com"}
+]
+description = "SBRS Jira Automation Tool"
+version = "1.6.7"
+readme = "README.md"
+requires-python = ">=3.8"
+
+[project.urls]
+Repository = "https://github.com/wikoeste/talos-te-sbjat"
+
+[project.scripts]
+talos-te-sbjat = "main:main"

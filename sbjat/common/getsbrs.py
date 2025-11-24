@@ -80,7 +80,7 @@ def cidrscore(ips,ticket):
             flag = postjira.comment(ticket,analysis,rules,scr,i)
         # update the ticket resolution and or close automatically
         postjira.resolveclose(ticket, flag)
-        logdata.logger.info(str(analysis))
+        logdata.logger.error(str(analysis))
 
 #Entered from ticketdata to get ipv4 socre
 def score(ip):
@@ -170,7 +170,8 @@ def ticketdata(ticket):
             cidrscore(match, ticket)
         if re.search(r'/.{2}', desc) is True:  # this is a cidr entry in description
             cidrscore(match, ticket)
-        #NO cidr so analyze each ip
+        #log the ips
+        logdata.logger.error(f"Ips from {ticket}, {ips}")
         #if there are ip address then get the sbrs data
         if len(ips) > 0:
             for i in ips:
@@ -178,7 +179,7 @@ def ticketdata(ticket):
                     ipv6results,v6rules,scr = juno.getipv6(i)
                     geoipdata = getgeoip(i)
                     data = ipv6results+geoipdata
-                    logdata.logger.info(str(date) + ":" + str(ipv6results)+str(geoipdata))
+                    logdata.logger.error(f"{date}: {ipv6results} and, {geoipdata}.")
                     # post comment to jira and update ticket fields
                     flag = postjira.comment(ticket,data,str(v6rules),scr,i)
                     settings.results.extend(ticket,data,str(rules),scr,i)
@@ -193,15 +194,15 @@ def ticketdata(ticket):
                     Rule Hits: {}".format(rules)+"\n \
                     Public Block List: {}".format(pbln)+"\n \
                     "+str(geoipdata)+"")
-                    logdata.logger.info(str(date)+":"+str(data))
+                    logdata.logger.error(str(date)+":"+str(data))
                     # post comment to jira and update ticket fields
                     flag = postjira.comment(ticket,data,str(rules),scr,i)
-                    logdata.logger.info("Flag for resolution, "+str(flag))
+                    logdata.logger.error("Flag for resolution, "+str(flag))
                     settings.results.append(ticket)
                     settings.results.extend([data,str(rules),scr,i])        # fixed extend error by adding []
                 else:                                                       # NO valid IP address
                     print(str(i) +", is not a valid IPv4 or v6 address")
-                    logdata.logger.info(str(ticket)+"; does not contain a valid IPv4 or v6 address: "+i)
+                    logdata.logger.error(str(ticket)+"; does not contain a valid IPv4 or v6 address: "+i)
 
                 # if this is a geoip ticket then set to 3 and do not auto resolve.
                 if flag == 0:
@@ -218,8 +219,8 @@ def ticketdata(ticket):
                 postjira.resolveclose(ticket, flag)
         else: # no IP addresses found in ticket
             err = "\nNo valid IPv4 or IPv6 Addresses found in IP fields of the ticket"
-            logdata.logger.info(str(date)+":"+str(err))
+            logdata.logger.error(str(date)+":"+str(err))
     # HTTP ERR to jira api
     else:
         err = "\nHTTP ERROR: {}".format(response.status_code),ticket + " Jira API Search"
-        logdata.logger.info(str(date)+":"+str(err))
+        logdata.logger.error(str(date)+":"+str(err))

@@ -62,22 +62,22 @@ def comment(ticket,data,rules,scr,ip):
             return 2
     elif ("Vu" or "Cu") in rules:
         if float(score) <= -2.0: # private comment
-            jira.add_comment(ticket, ip + ": " + "a domain associated with this IP are listed in the URIDB feed.",
+            jira.add_comment(f"{ticket}: {ip} - a domain associated with this IP are listed in the URIDB feed.",
                 visibility={'type': 'role', 'value': 'Project Developer'})
             return 2
     elif "Rtm" in rules: # private comment
         if float(score) <= -2.0:
             jira.add_comment(ticket, ip + ": " + "is blocked by a Reptool entry",
                 visibility = {'type': 'role', 'value': 'Project Developer'})
-            logdata.logger.info(ticket, ip + ": " + "is blocked by a Reptool entry")
+            logdata.logger.error(f"{ticket}: {ip} - is blocked by a Reptool entry")
             return 2
     elif float(score) <= -2.0: # private comment
         jira.add_comment(ticket,"Your IP, {}".format(ip)+ " has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules),
         visibility = {'type': 'role', 'value': 'Project Developer'})
         return 2
     elif float(score) > -1.9:
-        logdata.logger.info(ticket, ip + ": " + settings.boilerplates["recovered"])
-        jira.add_comment(ticket, ip + ": " + settings.boilerplates["recovered"])
+        logdata.logger.error(ticket, ip + ": " + settings.boilerplates["recovered"])
+        jira.add_comment(f"{ticket}:{ip} - {settings.boilerplates['recovered']}")
         return 1
     else: # private comment
         jira.add_comment(ticket, scr +","+rules, visibility={'type': 'role', 'value': 'Project Developer'})
@@ -100,7 +100,7 @@ def resolveclose(ticket,flag):
     issue.fields.labels.append(u'te-sbjat')
     issue.fields.labels.append(u'te-automation')
     issue.update(fields={"labels":issue.fields.labels})
-    logdata.logger.info(issue.fields.labels)
+    logdata.logger.error(issue.fields.labels)
     ###############
     #Setting the ticket to resolved or not
     #If the ticket is geoip do not close
@@ -112,7 +112,7 @@ def resolveclose(ticket,flag):
     # transitions = jira.transitions(issue, expand="transitions.fields")
     # for t in transitions:print(t)
     #######
-    logdata.logger.info(status)
+    logdata.logger.error(status)
     # based on the flag value we do the following
     # f=3 geoloaction unchanged
     # f=1, resolve
@@ -120,26 +120,26 @@ def resolveclose(ticket,flag):
     ####################################
     if flag == 3:  # geolocation ticket
         jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
-        logdata.logger.info(str(ticket) + ";"+settings.uname+"; Investigating the reported Geolocation issue.")
+        logdata.logger.error(f"{ticket} - {settings.uname}; Investigating the reported Geolocation issue.")
     # flag = 1 and will be auto resolved if possible
     elif flag == 1:
         if 'Pending' in str(status) or 'Open' in str(status):
             jira.transition_issue(issue,'5',resolution={'id': '1'})
-            logdata.logger.info(str(ticket) + "; Resolved Fixed")
+            logdata.logger.error(str(ticket) + "; Resolved Fixed")
         elif 'Investigating' in str(status):
             jira.transition_issue(issue,'741',resolution={'id':'1'})
-            logdata.logger.info(settings.uname +"; "+str(ticket)+'; Resolved Fixed')
+            logdata.logger.error(settings.uname +"; "+str(ticket)+'; Resolved Fixed')
         elif 'Reopened' in str(status):
             jira.transition_issue(issue,'5',resolution={'id':'1'})
-            logdata.logger.info(settings.uname +"; "+str(ticket)+'; Resolved Fixed')
+            logdata.logger.error(settings.uname +"; "+str(ticket)+'; Resolved Fixed')
         else:
             jira.transition_issue(issue, '5', resolution={'id': '1'})
-            logdata.logger.info(str(ticket) + "; Resolved Fixed")
+            logdata.logger.error(str(ticket) + "; Resolved Fixed")
     # flag = 2 we will keep the ticket open for analysis
     elif flag == 2:
         jira.add_comment(ticket, "Investigating the issue. Update to follow")
-        logdata.logger.info(settings.uname +"; Investigating")
+        logdata.logger.error(f"{settings.uname}; Investigating")
     #flag is not set we leave open
     else:
         jira.add_comment(ticket, "Investigating the issue. Update to follow")
-        logdata.logger.info(settings.uname +"; Investigating")
+        logdata.logger.error(f"{settings.uname}; Investigating")
