@@ -16,4 +16,4 @@ requires-python = ">=3.8"
 Repository = "https://github.com/wikoeste/talos-te-sbjat"
 
 [project.scripts]
-talos-te-sbjat = "main:main"
+talos-te-sbjat = "sbjat.main:main"

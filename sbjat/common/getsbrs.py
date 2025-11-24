@@ -1,6 +1,5 @@
 import ipaddress,logging
 from sbjat.common import settings,postjira,juno,logdata
-from sbjat import main as menu
 from ipaddress import ip_address, IPv4Address
 from netaddr import IPNetwork, valid_ipv4,valid_ipv6
 import requests,subprocess,shlex,re,time,json
