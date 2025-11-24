@@ -35,20 +35,21 @@ def main():
         #log the tickets located
         logdata.logger.info(clist)
         print("\n\n")
-        for i in clist:
-            # take ownership, parse for data, analyze data,
-            # return and post analysis results in private comment,
-            # post public boiler plate
-            postjira.assign(i)
-            issue = jira.issue(i)
-            # get the ticket data for each cog case located
-            getsbrs.ticketdata(i)
         if len(clist) == 0:
-            print("No valid Tickets")
+            print("No valid SBRS Tickets")
             logdata.logger.info("No valid Tickets")
+        else:
+            for i in clist:
+                # take ownership, parse for data, analyze data,
+                # return and post analysis results in private comment,
+                # post public boiler plate
+                postjira.assign(i)
+                issue = jira.issue(i)
+                # get the ticket data for each cog case located
+                getsbrs.ticketdata(i)
         ##testing/debuging
         #getsbrs.ticketdata('COG-74286')
-        #getsbrs.ticketdata('COG-80149')
+        getsbrs.ticketdata('COG-80149')
 
 ########################
 if __name__ == '__main__':

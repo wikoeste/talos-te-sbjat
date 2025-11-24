@@ -128,7 +128,7 @@ def ticketdata(ticket):
     data,rules,scr,date,match = (None,None,None,None,None)
     if response.status_code == 200:
         jsondict = response.json()
-        #print('=jql search results=\n', json.dumps(jsondict, indent=2))
+        print('=jql search results=\n', json.dumps(jsondict, indent=2))
         desc    = jsondict['issues'][0]['fields']['description']
         smry    = jsondict['issues'][0]['fields']['summary']
         cf20042 = jsondict['issues'][0]['fields']['customfield_20042']
@@ -212,7 +212,7 @@ def ticketdata(ticket):
                             flag = 3
                 # should think how to handle multiple ips storing all in a dictionary or list
                 if settings.results is not None:
-                    logdata.logger.info(str(date+":"+str(settings.results)))
+                    logdata.logger.error(f"{date}:{settings.results}")
                 # Resolve the ticket is possible via automation
                 # update resolution for the last analyzed IP
                 postjira.resolveclose(ticket, flag)
