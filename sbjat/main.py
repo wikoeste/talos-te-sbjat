@@ -49,7 +49,7 @@ def main():
                 getsbrs.ticketdata(i)
         ##testing/debuging
         #getsbrs.ticketdata('COG-74286')
-        getsbrs.ticketdata('COG-80149')
+        #getsbrs.ticketdata('COG-80149')
 
 ########################
 if __name__ == '__main__':
