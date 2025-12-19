@@ -213,9 +213,9 @@ def ticketdata(ticket):
                 # should think how to handle multiple ips storing all in a dictionary or list
                 if settings.results is not None:
                     logdata.logger.error(f"{date}:{settings.results}")
-                # Resolve the ticket is possible via automation
-                # update resolution for the last analyzed IP
-                postjira.resolveclose(ticket, flag)
+            # Resolve the ticket is possible via automation
+            # update resolution for the last analyzed IP
+            postjira.resolveclose(ticket, flag)
         else: # no IP addresses found in ticket
             err = "\nNo valid IPv4 or IPv6 Addresses found in IP fields of the ticket"
             logdata.logger.error(str(date)+":"+str(err))
