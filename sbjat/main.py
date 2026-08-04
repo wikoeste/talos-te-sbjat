@@ -1,55 +1,68 @@
 # Senderbase Jira Automation Tool
 # Tool to read, analyze, respond, and resolve jira sbrs case types
-from sbjat.common import settings
-settings.init()
-from sbjat.common import getsbrs,postjira,logdata
-from jira import JIRA
-import re,requests
-requests.packages.urllib3.disable_warnings()
+import os
+import re
+
+from sbjat.common import getsbrs, logdata, postjira, settings
+
+JIRA_SERVER = "https://jira.talos.cisco.com"
+DEFAULT_QUERY = (
+    "project = COG AND issuetype = SBRS AND created >= -1d "
+    "AND assignee in (EMPTY) ORDER BY key ASC"
+)
+
+
+def run(jira=None, max_results=None):
+    """Process the current SBRS queue and return the number of tickets found."""
+    max_results = max_results or int(os.getenv("SBJAT_MAX_RESULTS", "100"))
+    jira = jira or postjira.get_jira()
+    query = os.getenv("SBJAT_JQL", DEFAULT_QUERY)
+    issues = jira.search_issues(query, maxResults=max_results)
+    tickets = []
+    for issue in issues:
+        ticket = getattr(issue, "key", None)
+        if not ticket:
+            match = re.search(r"\bCOG-\d+\b", str(issue))
+            ticket = match.group(0) if match else None
+        if ticket and ticket not in tickets:
+            tickets.append(ticket)
+
+    # Keep the existing console output useful for cron logs and manual runs.
+    print(issues)
+    print(f"Total sbrs cases in last day (24 hours) is {len(tickets)}")
+    print(tickets)
+    logdata.logger.info("Tickets found: %s", tickets)
+
+    if not tickets:
+        print("No valid SBRS Tickets")
+        logdata.logger.info("No valid Tickets")
+        return 0
+
+    failures = []
+    for ticket in tickets:
+        try:
+            postjira.assign(ticket, jira=jira)
+            getsbrs.ticketdata(ticket, jira=jira)
+        except Exception as exc:
+            # One malformed or transiently failing ticket must not stop the queue.
+            logdata.logger.exception("Failed to process %s", ticket)
+            failures.append((ticket, exc))
+    if failures:
+        failed_tickets = ", ".join(ticket for ticket, _ in failures)
+        raise RuntimeError(f"Failed to process {len(failures)} ticket(s): {failed_tickets}")
+    return len(tickets)
 
 def main():
-    jira           = None
-    clist,cmtips   = ([],[])
-    # log data
-    logdata.logger.error("Tool run by {}".format(settings.uname))
-    print("\n===Senderbase Jira Automation Tool (sbjat)==="+settings.version)
-    #Collect all SBRS tickets in the last day
-    options = {"server": "https://jira.talos.cisco.com"}
+    logdata.logger.info("Tool run by %s", settings.uname)
+    print(f"\n===Senderbase Jira Automation Tool (sbjat)==={settings.version}")
     try:
-        jira    = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
-    except:
-            print(f"Jira API auth ERROR; {settings.uname}, API Key {settings.jiraKey}.")
-    finally:
-        qry    = 'project = COG AND issuetype = SBRS AND created >= -1d AND assignee in (EMPTY) ORDER BY key ASC'
-        # get max 10 results
-        sbrs    = jira.search_issues(qry, maxResults=10)
-        cases   = str(sbrs)
-        cog     = re.compile("COG-.{5}")
-        # extract the cog ticket id cog-12345
-        for match in re.findall(cog, cases): #
-            clist.append(match)
-        totalsbrstickets = len(clist)
-        print('Total sbrs cases in last day (24 hours) is {}'.format(totalsbrstickets))
-        print(clist)
-        #log the tickets located
-        logdata.logger.error(clist)
-        print("\n\n")
-        if len(clist) == 0:
-            print("No valid SBRS Tickets")
-            logdata.logger.error("No valid Tickets")
-        else:
-            for i in clist:
-                # take ownership, parse for data, analyze data,
-                # return and post analysis results in private comment,
-                # post public boiler plate
-                postjira.assign(i)
-                issue = jira.issue(i)
-                # get the ticket data for each cog case located
-                getsbrs.ticketdata(i)
-        ##testing/debuging
-        #getsbrs.ticketdata('COG-74286')
-        #dgetsbrs.ticketdata('COG-80149')
+        run()
+        return 0
+    except Exception as exc:
+        print(f"Jira automation failed for {settings.uname}: {exc}")
+        logdata.logger.exception("Jira automation failed")
+        return 1
 
 ########################
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

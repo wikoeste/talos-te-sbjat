@@ -1,7 +1,10 @@
-from sbjat.common import settings,logdata
-settings.init()
-import requests,json
+import requests
+
+from sbjat.common import logdata, settings
+
 requests.packages.urllib3.disable_warnings()
+
+HTTP_TIMEOUT = (5, 30)
 
 def getipv6(address):
     apiKey  = settings.junoKey
@@ -12,7 +15,14 @@ def getipv6(address):
     scores  = []
     rules   = []
     try:
-        resp = requests.get(settings.juno+'juno_past_6_months/_search?', headers={'Content-type': 'application/json'}, data=qry, auth=(settings.uname, apiKey),verify=False)
+        resp = requests.get(
+            settings.juno + 'juno_past_6_months/_search?',
+            headers={'Content-type': 'application/json'},
+            data=qry,
+            auth=(settings.uname, apiKey),
+            verify=False,
+            timeout=HTTP_TIMEOUT,
+        )
         if resp.status_code == 200:
             json_result = resp.json()
             #print(json.dumps(json_result, indent=2))
@@ -35,9 +45,9 @@ def getipv6(address):
                 "\nIP: {}".format(address) +
                 '\nResults: No data found for IP')
             return(tbldata,rules,scores)
-    except:
+    except requests.RequestException:
         tbldata = ('\n===SBRS ipv6 Threat Intel===' \
                    '\nUnable to Reach Juno API Host!')
         print(tbldata)
+        logdata.logger.exception("Unable to reach Juno API for %s", address)
         return (tbldata,rules,scores)
-        logdata.logger.info(tbldata)

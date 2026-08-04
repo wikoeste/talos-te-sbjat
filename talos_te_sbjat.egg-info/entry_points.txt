@@ -1,0 +1,2 @@
+[console_scripts]
+talos-te-sbjat = sbjat.main:main

@@ -1,26 +1,39 @@
-import getpass,re,os.path,queue
+import getpass
+import os
+import re
+from pathlib import Path
+
+
 def init():                                 # Global List of variables
     global uname,cecpw,sherlock,sherlockKey,boilerplates,version,jiraKey
     global juno,junoKey,geolocation,results
 
 def getKey(keyname):                        # take the search keyname and return the appropriate api key
-    match     = ''
-    freebsd   = "/home/{}".format(uname)+"/.profile"
-    osx       = "/Users/{}".format(uname)+"/.profile"
-    if os.path.exists(freebsd):
-        fname = freebsd
-    else:
-        fname = osx
-    with open(fname, 'r') as fp:
-        lines = fp.read().splitlines()
-        for l in lines:
-            if l.startswith('#'):
-                pass
-            if keyname.upper() in l:
-                match = l
-    key = re.sub(r'.*=','',match)
-    key = re.sub(r'"', '', key)
-    return key
+    """Return a key from the environment or the user's profile.
+
+    Environment variables make unattended runs independent from a login shell.
+    The legacy profile lookup remains as a fallback for existing installations.
+    """
+    environment_names = (keyname, keyname.upper(), f"SBJAT_{keyname.upper()}")
+    for name in environment_names:
+        value = os.getenv(name)
+        if value:
+            return value.strip()
+
+    profile = Path.home() / ".profile"
+    if not profile.is_file():
+        return ""
+
+    pattern = re.compile(
+        rf"^(?:export\s+)?[^#=]*{re.escape(keyname)}[^=]*=(.*)$",
+        re.IGNORECASE,
+    )
+    with profile.open(encoding="utf-8") as fp:
+        for line in fp:
+            match = pattern.match(line.strip())
+            if match:
+                return match.group(1).strip().strip("\"'")
+    return ""
 
 #Get user creds and API Keys at start
 uname        = getpass.getuser()
@@ -33,7 +46,7 @@ jiraKey	     = getKey("JRW")
 #results of all ips scores
 results = []
 # Version
-version      = '1.6.7'
+version      = '1.6.8'
 # GEO Location string check
 geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown','GeoBlock','GeoIP']
 # SBRS Boilerplates

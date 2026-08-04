@@ -1,145 +1,126 @@
-from sbjat.common import settings
-settings.init()
-from sbjat.common import logdata
+from functools import lru_cache
+
 from jira import JIRA
-######################
-def assign(ticket):
-    options     = {"server": "https://jira.talos.cisco.com"}
-    jira        = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
-    issue 	    = jira.issue(ticket)
-    jira.assign_issue(ticket, 'wikoeste')   # assign the ticket to me
 
-#called from getsbrs.ticketdata()
-#returns flag value to resolve ticket
-def comment(ticket,data,rules,scr,ip):
-    score   = None
-    options = {"server": "https://jira.talos.cisco.com"}
-    jira    = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
+from sbjat.common import logdata, settings
 
-    # private comment of sbrs data
-    jira.add_comment(ticket, str(data), visibility={'type': 'role', 'value': 'Project Developer'})
-    issue   = jira.issue(ticket)
+JIRA_SERVER = "https://jira.talos.cisco.com"
+PRIVATE = {"type": "role", "value": "Project Developer"}
 
-    # write the rule hits in COG-Hits in jira
-    issue.update(fields={'customfield_20380':rules})
 
-    # if we have a list of scores get avg if scr is none
-    if scr is None:
-        score = 0.0
-    elif type(scr) == list:
-        if len(scr) > 0:
-            avg   = sum(scr)/len(scr)
-            score = avg
-    else:
-        score = scr
-    # return boiler plate based on score these are public jira comments
-    if score == 0.0 or score is None:
-        jira.add_comment(ticket,ip +": " + settings.boilerplates["none"])
+@lru_cache(maxsize=1)
+def get_jira():
+    """Create one Jira client per process instead of reconnecting per action."""
+    if not settings.jiraKey:
+        raise RuntimeError("Jira API key is missing (set JRW or SBJAT_JRW)")
+    return JIRA(
+        basic_auth=(settings.uname, settings.jiraKey),
+        options={"server": JIRA_SERVER},
+    )
+
+
+def _score_value(score):
+    if score is None:
+        return 0.0
+    if isinstance(score, list):
+        values = [float(item) for item in score if item is not None]
+        return sum(values) / len(values) if values else 0.0
+    try:
+        return float(score)
+    except (TypeError, ValueError):
+        logdata.logger.warning("Unrecognized SBRS score %r; treating as neutral", score)
+        return 0.0
+
+
+def _has_any(rules, *codes):
+    return any(code in str(rules) for code in codes)
+
+
+def assign(ticket, jira=None):
+    jira = jira or get_jira()
+    jira.assign_issue(ticket, settings.uname)
+
+
+def comment(ticket, data, rules, scr, ip, jira=None):
+    """Post analysis and return the workflow flag for this result."""
+    jira = jira or get_jira()
+    score = _score_value(scr)
+    rules_text = str(rules)
+
+    jira.add_comment(ticket, str(data), visibility=PRIVATE)
+    issue = jira.issue(ticket)
+    issue.update(fields={"customfield_20380": rules_text})
+
+    if score == 0.0:
+        jira.add_comment(ticket, f"{ip}: {settings.boilerplates['none']}")
         return 1
-    elif ("RsH" or "RhM") in rules:
-        if float(score) <= -2.0:
-            jira.add_comment(ticket,ip +": " + settings.boilerplates["iadh"])
+    if _has_any(rules_text, "RsH", "RhM"):
+        if score <= -2.0:
+            jira.add_comment(ticket, f"{ip}: {settings.boilerplates['iadh']}")
         return 1
-    elif "Gry" in rules and float(score) <= -7.0:
-        jira.add_comment(ticket,ip +": " +  settings.boilerplates["grey"])
+    if "Gry" in rules_text and score <= -7.0:
+        jira.add_comment(ticket, f"{ip}: {settings.boilerplates['grey']}")
         return 2
-    elif ("Cbl" or "Pbl" or "Sbl" or "Css") in rules:
-        jira.add_comment(ticket,ip +": " + settings.boilerplates["spamhaus"])
+    if _has_any(rules_text, "Cbl", "Pbl", "Sbl", "Css"):
+        jira.add_comment(ticket, f"{ip}: {settings.boilerplates['spamhaus']}")
         return 1
-    elif ("psb" or "PSB") in rules: # private comment
-        if float(score) == -2.0 or float(score <= -2.0):
-            jira.add_comment(ticket, ip + ": " + "IP listed in http://psbl.org",
-                visibility={'type': 'role', 'value': 'Project Developer'})
-            return 2
-    elif ("Cp1" or "Cp2" or "Vp1" or "Vp2") in rules:
-        if float(score) <= -2.0:
-            jira.add_comment(ticket, ip + ": " + settings.boilerplates["cp1"])
-            return 1
-    elif ("Ivn" or "Ivm") in rules:
-        if float(score) <= -2.0: # private comment
-            jira.add_comment(ticket, ip + ": " + "listed on Invalument: https://www.invaluement.com/",
-                visibility={'type': 'role', 'value': 'Project Developer'})
-            return 2
-    elif ("Vu" or "Cu") in rules:
-        if float(score) <= -2.0: # private comment
-            jira.add_comment(f"{ticket}: {ip} - a domain associated with this IP are listed in the URIDB feed.",
-                visibility={'type': 'role', 'value': 'Project Developer'})
-            return 2
-    elif "Rtm" in rules: # private comment
-        if float(score) <= -2.0:
-            jira.add_comment(ticket, ip + ": " + "is blocked by a Reptool entry",
-                visibility = {'type': 'role', 'value': 'Project Developer'})
-            logdata.logger.error(f"{ticket}: {ip} - is blocked by a Reptool entry")
-            return 2
-    elif float(score) <= -2.0: # private comment
-        jira.add_comment(ticket,"Your IP, {}".format(ip)+ " has a malicious score {}".format(scr)+" due to the following known rules: {}".format(rules),
-        visibility = {'type': 'role', 'value': 'Project Developer'})
+    if _has_any(rules_text, "psb", "PSB") and score <= -2.0:
+        jira.add_comment(ticket, f"{ip}: IP listed in http://psbl.org", visibility=PRIVATE)
         return 2
-    elif float(score) > -1.9:
-        logdata.logger.error(ticket, ip + ": " + settings.boilerplates["recovered"])
-        jira.add_comment(f"{ticket}:{ip} - {settings.boilerplates['recovered']}")
+    if _has_any(rules_text, "Cp1", "Cp2", "Vp1", "Vp2") and score <= -2.0:
+        jira.add_comment(ticket, f"{ip}: {settings.boilerplates['cp1']}")
         return 1
-    else: # private comment
-        jira.add_comment(ticket, scr +","+rules, visibility={'type': 'role', 'value': 'Project Developer'})
+    if _has_any(rules_text, "Ivn", "Ivm") and score <= -2.0:
+        jira.add_comment(
+            ticket,
+            f"{ip}: listed on Invaluement: https://www.invaluement.com/",
+            visibility=PRIVATE,
+        )
         return 2
+    if _has_any(rules_text, "Vu", "Cu") and score <= -2.0:
+        jira.add_comment(
+            ticket,
+            f"{ip}: a domain associated with this IP is listed in the URIDB feed.",
+            visibility=PRIVATE,
+        )
+        return 2
+    if "Rtm" in rules_text and score <= -2.0:
+        jira.add_comment(ticket, f"{ip}: is blocked by a Reptool entry", visibility=PRIVATE)
+        logdata.logger.info("%s: %s - blocked by a Reptool entry", ticket, ip)
+        return 2
+    if score <= -2.0:
+        jira.add_comment(
+            ticket,
+            f"Your IP, {ip} has a malicious score {scr} due to the following known rules: {rules_text}",
+            visibility=PRIVATE,
+        )
+        return 2
+    if score > -1.9:
+        logdata.logger.info("%s: %s: %s", ticket, ip, settings.boilerplates["recovered"])
+        jira.add_comment(ticket, f"{ip}: {settings.boilerplates['recovered']}")
+        return 1
 
-def resolveclose(ticket,flag):
-    options     = {"server": "https://jira.talos.cisco.com"}
-    jira        = JIRA(basic_auth=(settings.uname, settings.jiraKey), options=options)
-    issue       = jira.issue(ticket)
-    transitions = jira.transitions(issue)
-    resol       = jira.resolutions()
-    status      = issue.fields.status
-    ###DEBUG PRINTS###
-    #print(resol)
-    #print(transitions)
-    #print([(t['id'], t['name']) for t in transitions])
-    #print("case status is", str(status))
-    #################
-    # Append the te labels for metrics
-    issue.fields.labels.append(u'te-sbjat')
-    issue.fields.labels.append(u'te-automation')
-    issue.update(fields={"labels":issue.fields.labels})
-    logdata.logger.error(issue.fields.labels)
-    ###############
-    #Setting the ticket to resolved or not
-    #If the ticket is geoip do not close
-    # else if score is -1.9 or better close
-    # else if -2 or worse send reply and close
-    # else if Rtm and -2 do not close comment wbrs score
-    # else do not close
-    #######
-    # transitions = jira.transitions(issue, expand="transitions.fields")
-    # for t in transitions:print(t)
-    #######
-    logdata.logger.error(status)
-    # based on the flag value we do the following
-    # f=3 geoloaction unchanged
-    # f=1, resolve
-    # f=2, unchanaged
-    ####################################
-    if flag == 3:  # geolocation ticket
+    jira.add_comment(ticket, f"{scr},{rules_text}", visibility=PRIVATE)
+    return 2
+
+
+def resolveclose(ticket, flag, jira=None):
+    jira = jira or get_jira()
+    issue = jira.issue(ticket)
+    status = str(issue.fields.status)
+
+    labels = list(issue.fields.labels or [])
+    labels.extend(label for label in ("te-sbjat", "te-automation") if label not in labels)
+    issue.update(fields={"labels": labels})
+    logdata.logger.info("%s labels: %s", ticket, labels)
+
+    if flag == 3:
         jira.add_comment(ticket, "Investigating the reported Geolocation issue. Update to follow")
-        logdata.logger.error(f"{ticket} - {settings.uname}; Investigating the reported Geolocation issue.")
-    # flag = 1 and will be auto resolved if possible
+        logdata.logger.info("%s - %s: investigating geolocation", ticket, settings.uname)
     elif flag == 1:
-        if 'Pending' in str(status) or 'Open' in str(status):
-            jira.transition_issue(issue,'5',resolution={'id': '1'})
-            logdata.logger.error(str(ticket) + "; Resolved Fixed")
-        elif 'Investigating' in str(status):
-            jira.transition_issue(issue,'741',resolution={'id':'1'})
-            logdata.logger.error(settings.uname +"; "+str(ticket)+'; Resolved Fixed')
-        elif 'Reopened' in str(status):
-            jira.transition_issue(issue,'5',resolution={'id':'1'})
-            logdata.logger.error(settings.uname +"; "+str(ticket)+'; Resolved Fixed')
-        else:
-            jira.transition_issue(issue, '5', resolution={'id': '1'})
-            logdata.logger.error(str(ticket) + "; Resolved Fixed")
-    # flag = 2 we will keep the ticket open for analysis
-    elif flag == 2:
-        jira.add_comment(ticket, "Investigating the issue. Update to follow")
-        logdata.logger.error(f"{settings.uname}; Investigating")
-    #flag is not set we leave open
+        transition = "741" if "Investigating" in status else "5"
+        jira.transition_issue(issue, transition, resolution={"id": "1"})
+        logdata.logger.info("%s - %s: resolved fixed", ticket, settings.uname)
     else:
         jira.add_comment(ticket, "Investigating the issue. Update to follow")
-        logdata.logger.error(f"{settings.uname}; Investigating")
+        logdata.logger.info("%s - %s: investigating", ticket, settings.uname)

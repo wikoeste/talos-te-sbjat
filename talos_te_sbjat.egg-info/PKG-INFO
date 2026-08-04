@@ -1,3 +1,15 @@
+Metadata-Version: 2.4
+Name: talos-te-sbjat
+Version: 1.6.8
+Summary: SBRS Jira Automation Tool
+Author-email: Will Koester <wikoeste@cisco.com>
+Project-URL: Repository, https://github.com/wikoeste/talos-te-sbjat
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: jira>=3.4
+Requires-Dist: netaddr>=0.8
+Requires-Dist: requests>=2.28
+
 # Senderbase/IPedia, Jira Ticket Automation Tool
 
 Tool to read, analyze, respond, and resolve jira sbrs case types through automation is possible
