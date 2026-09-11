@@ -1,3 +1,5 @@
 jira>=3.4
 netaddr>=0.8
+python-dotenv>=1.0
 requests>=2.28
+urllib3<2,>=1.26

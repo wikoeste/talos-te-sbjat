@@ -8,13 +8,15 @@ authors = [
     {name = "Will Koester", email = "wikoeste@cisco.com"}
 ]
 description = "SBRS Jira Automation Tool"
-version = "1.6.8"
+version = "1.6.10"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "jira>=3.4",
     "netaddr>=0.8",
+    "python-dotenv>=1.0",
     "requests>=2.28",
+    "urllib3>=1.26,<2",
 ]
 
 [project.urls]

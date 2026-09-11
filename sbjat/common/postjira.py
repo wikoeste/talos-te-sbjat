@@ -12,10 +12,16 @@ PRIVATE = {"type": "role", "value": "Project Developer"}
 def get_jira():
     """Create one Jira client per process instead of reconnecting per action."""
     if not settings.jiraKey:
-        raise RuntimeError("Jira API key is missing (set JRW or SBJAT_JRW)")
+        raise RuntimeError(
+            "Jira API key is missing (set JIRA_API_KEY or JRW_KEY in the "
+            "environment, sbjat/.env, or ~/.profile)"
+        )
     return JIRA(
         basic_auth=(settings.uname, settings.jiraKey),
         options={"server": JIRA_SERVER},
+        get_server_info=False,
+        max_retries=3,
+        timeout=(5, 30),
     )
 
 
@@ -23,7 +29,12 @@ def _score_value(score):
     if score is None:
         return 0.0
     if isinstance(score, list):
-        values = [float(item) for item in score if item is not None]
+        values = []
+        for item in score:
+            try:
+                values.append(float(item))
+            except (TypeError, ValueError):
+                logdata.logger.warning("Ignoring unrecognized SBRS score %r", item)
         return sum(values) / len(values) if values else 0.0
     try:
         return float(score)
@@ -41,14 +52,14 @@ def assign(ticket, jira=None):
     jira.assign_issue(ticket, settings.uname)
 
 
-def comment(ticket, data, rules, scr, ip, jira=None):
+def comment(ticket, data, rules, scr, ip, jira=None, issue=None):
     """Post analysis and return the workflow flag for this result."""
     jira = jira or get_jira()
     score = _score_value(scr)
     rules_text = str(rules)
 
     jira.add_comment(ticket, str(data), visibility=PRIVATE)
-    issue = jira.issue(ticket)
+    issue = issue or jira.issue(ticket)
     issue.update(fields={"customfield_20380": rules_text})
 
     if score == 0.0:
@@ -104,9 +115,9 @@ def comment(ticket, data, rules, scr, ip, jira=None):
     return 2
 
 
-def resolveclose(ticket, flag, jira=None):
+def resolveclose(ticket, flag, jira=None, issue=None):
     jira = jira or get_jira()
-    issue = jira.issue(ticket)
+    issue = issue or jira.issue(ticket)
     status = str(issue.fields.status)
 
     labels = list(issue.fields.labels or [])

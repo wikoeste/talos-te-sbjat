@@ -6,11 +6,13 @@ import tempfile
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-# write to users home directory
-log_dir = Path(os.getenv("SBJAT_LOG_DIR", str(Path.home() / "logs")))
+# Keep automation logs in one predictable per-user location.
+log_dir = Path.home() / "logs"
 
 logger = logging.getLogger("sbjat")
-logger.setLevel(logging.INFO)
+log_level = os.getenv("SBJAT_LOG_LEVEL", "INFO").upper()
+logger.setLevel(getattr(logging, log_level, logging.INFO))
+logger.propagate = False
 if not logger.handlers:
     try:
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -18,6 +20,7 @@ if not logger.handlers:
             log_dir / "talos-te-sbjat-err.log",
             maxBytes=5_000_000,
             backupCount=3,
+            encoding="utf-8",
         )
     except OSError:
         # Logging should never prevent the automation itself from starting.
@@ -27,6 +30,7 @@ if not logger.handlers:
             fallback_dir / "talos-te-sbjat-err.log",
             maxBytes=5_000_000,
             backupCount=3,
+            encoding="utf-8",
         )
     handler.setFormatter(logging.Formatter(
         "%(asctime)s:%(name)s:%(levelname)s - %(message)s",

@@ -39,5 +39,7 @@ talos_te_sbjat.egg-info/dependency_links.txt
 talos_te_sbjat.egg-info/entry_points.txt
 talos_te_sbjat.egg-info/requires.txt
 talos_te_sbjat.egg-info/top_level.txt
+tests/test_getsbrs.py
 tests/test_main.py
 tests/test_postjira.py
+tests/test_settings.py

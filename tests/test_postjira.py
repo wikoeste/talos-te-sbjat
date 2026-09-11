@@ -25,6 +25,9 @@ class PostJiraTests(unittest.TestCase):
     def test_unknown_score_is_handled_as_neutral(self):
         self.assertEqual(self.comment("--", "Unknown"), 1)
 
+    def test_invalid_values_in_score_list_are_ignored(self):
+        self.assertEqual(self.comment("--", ["Unknown", -4]), 2)
+
     def test_labels_are_idempotent(self):
         self.issue.fields.labels = ["te-sbjat"]
         self.issue.fields.status = "Open"

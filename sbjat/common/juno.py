@@ -1,53 +1,79 @@
+from functools import lru_cache
+
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from sbjat.common import logdata, settings
 
 requests.packages.urllib3.disable_warnings()
 
 HTTP_TIMEOUT = (5, 30)
+HTTP = requests.Session()
+HTTP.mount(
+    "https://",
+    HTTPAdapter(
+        max_retries=Retry(
+            total=2,
+            backoff_factor=0.25,
+            status_forcelist=(429, 500, 502, 503, 504),
+            allowed_methods=frozenset({"GET"}),
+        )
+    ),
+)
 
+
+@lru_cache(maxsize=1024)
 def getipv6(address):
-    apiKey  = settings.junoKey
-    headers = {'Content-type': 'application/json'}
-    qry     = '{"_source":["_id","@timestamp","sbrs.ingest.score","sbrs.ingest.rules","ipas.original.result.ipv6","ipas.original.result.sbrs",' \
-              '"ipas.ingest.verdict","ipas.original.result.ipas_score"],"query":{"term":{"sender_ip":{"value":"'+address+'"}}}}'
-    total   = 0
-    scores  = []
-    rules   = []
+    """Fetch and cache IPv6 SBRS data for the current automation process."""
+    query = {
+        "_source": [
+            "_id",
+            "@timestamp",
+            "sbrs.ingest.score",
+            "sbrs.ingest.rules",
+            "ipas.original.result.ipv6",
+            "ipas.original.result.sbrs",
+            "ipas.ingest.verdict",
+            "ipas.original.result.ipas_score",
+        ],
+        "query": {"term": {"sender_ip": {"value": address}}},
+    }
+    scores = []
+    rules = []
     try:
-        resp = requests.get(
-            settings.juno + 'juno_past_6_months/_search?',
-            headers={'Content-type': 'application/json'},
-            data=qry,
-            auth=(settings.uname, apiKey),
+        response = HTTP.get(
+            settings.juno + "juno_past_6_months/_search",
+            json=query,
+            auth=(settings.uname, settings.junoKey),
             verify=False,
             timeout=HTTP_TIMEOUT,
         )
-        if resp.status_code == 200:
-            json_result = resp.json()
-            #print(json.dumps(json_result, indent=2))
-            total = json_result['hits']['total']['value']
-            if total > 0:
-                for i in json_result['hits']['hits']:
-                    scores.append(i['_source']['sbrs.ingest.score'])
-                    for j in i['_source']['sbrs.ingest.rules']:
-                        rules.append(j)
-            tbldata = (
-                    "\n====SBRS ipv6 Threat Intel====" \
-                    "\nIP: {}".format(address) +
-                    "\nScore: {}".format(scores) +
-                    "\nRules: {}".format(rules)
-            )
-            return(tbldata,rules,scores)
-        else:
-            tbldata = (
-                '\n===SBRS ipv6 Threat Intel===' \
-                "\nIP: {}".format(address) +
-                '\nResults: No data found for IP')
-            return(tbldata,rules,scores)
-    except requests.RequestException:
-        tbldata = ('\n===SBRS ipv6 Threat Intel===' \
-                   '\nUnable to Reach Juno API Host!')
-        print(tbldata)
+        response.raise_for_status()
+        result = response.json()
+        hits = result.get("hits", {}).get("hits", [])
+        for hit in hits:
+            source = hit.get("_source", {})
+            score = source.get("sbrs.ingest.score")
+            if score is not None:
+                scores.append(score)
+            rules.extend(source.get("sbrs.ingest.rules") or [])
+    except requests.RequestException as exc:
         logdata.logger.exception("Unable to reach Juno API for %s", address)
-        return (tbldata,rules,scores)
+        raise RuntimeError(f"Unable to reach Juno API for {address}") from exc
+    except (ValueError, TypeError) as exc:
+        logdata.logger.exception("Invalid Juno API response for %s", address)
+        raise RuntimeError(f"Juno returned invalid data for {address}") from exc
+
+    if not scores and not rules:
+        return (
+            f"\n===SBRS IPv6 Threat Intel===\nIP: {address}\nResults: No data found for IP",
+            rules,
+            scores,
+        )
+    return (
+        f"\n====SBRS IPv6 Threat Intel====\nIP: {address}"
+        f"\nScore: {scores}\nRules: {rules}",
+        rules,
+        scores,
+    )
