@@ -1,4 +1,5 @@
 import unittest
+import os
 from unittest.mock import Mock, patch
 
 from sbjat import main
@@ -25,6 +26,11 @@ class MainTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "COG-1"):
             main.run(jira=jira, max_results=10)
         assign.assert_any_call("COG-2", jira=jira)
+
+    @patch.dict(os.environ, {"SBJAT_MAX_RESULTS": "invalid"})
+    def test_run_rejects_invalid_environment_limit(self):
+        with self.assertRaisesRegex(ValueError, "SBJAT_MAX_RESULTS"):
+            main.run(jira=Mock())
 
 
 if __name__ == "__main__":

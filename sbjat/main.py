@@ -2,6 +2,7 @@
 # Tool to read, analyze, respond, and resolve jira sbrs case types
 import os
 import re
+import time
 
 from sbjat.common import getsbrs, logdata, postjira, settings
 
@@ -14,24 +15,34 @@ DEFAULT_QUERY = (
 
 def run(jira=None, max_results=None):
     """Process the current SBRS queue and return the number of tickets found."""
-    max_results = max_results or int(os.getenv("SBJAT_MAX_RESULTS", "100"))
+    if max_results is None:
+        raw_max_results = os.getenv("SBJAT_MAX_RESULTS", "100")
+        try:
+            max_results = int(raw_max_results)
+        except ValueError as exc:
+            raise ValueError("SBJAT_MAX_RESULTS must be a positive integer") from exc
+    if max_results < 1:
+        raise ValueError("max_results must be a positive integer")
+
+    started = time.monotonic()
+    settings.results.clear()
     jira = jira or postjira.get_jira()
     query = os.getenv("SBJAT_JQL", DEFAULT_QUERY)
+    logdata.logger.info("Searching Jira SBRS queue (max_results=%d)", max_results)
     issues = jira.search_issues(query, maxResults=max_results)
     tickets = []
+    seen = set()
     for issue in issues:
         ticket = getattr(issue, "key", None)
         if not ticket:
             match = re.search(r"\bCOG-\d+\b", str(issue))
             ticket = match.group(0) if match else None
-        if ticket and ticket not in tickets:
+        if ticket and ticket not in seen:
+            seen.add(ticket)
             tickets.append(ticket)
 
-    # Keep the existing console output useful for cron logs and manual runs.
-    print(issues)
     print(f"Total sbrs cases in last day (24 hours) is {len(tickets)}")
-    print(tickets)
-    logdata.logger.info("Tickets found: %s", tickets)
+    logdata.logger.info("Tickets found (%d): %s", len(tickets), tickets)
 
     if not tickets:
         print("No valid SBRS Tickets")
@@ -40,6 +51,7 @@ def run(jira=None, max_results=None):
 
     failures = []
     for ticket in tickets:
+        ticket_started = time.monotonic()
         try:
             postjira.assign(ticket, jira=jira)
             getsbrs.ticketdata(ticket, jira=jira)
@@ -47,9 +59,16 @@ def run(jira=None, max_results=None):
             # One malformed or transiently failing ticket must not stop the queue.
             logdata.logger.exception("Failed to process %s", ticket)
             failures.append((ticket, exc))
+        else:
+            logdata.logger.info(
+                "Processed %s in %.2fs", ticket, time.monotonic() - ticket_started
+            )
     if failures:
         failed_tickets = ", ".join(ticket for ticket, _ in failures)
         raise RuntimeError(f"Failed to process {len(failures)} ticket(s): {failed_tickets}")
+    logdata.logger.info(
+        "Completed %d ticket(s) in %.2fs", len(tickets), time.monotonic() - started
+    )
     return len(tickets)
 
 def main():

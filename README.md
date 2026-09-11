@@ -2,9 +2,28 @@
 
 Tool to read, analyze, respond, and resolve jira sbrs case types through automation is possible
 
+# Configuration
+Credentials are loaded in this order: process environment, `sbjat/.env` (or the file named by `SBJAT_ENV_FILE`), then exact variable assignments in `~/.profile`. Jira authentication accepts `JIRA_API_KEY`, `JRW_KEY`, or their legacy `SBJAT_` aliases. The Jira username accepts `JIRA_USERNAME`, `CS_UN`, or `TALOS_USERNAME`, then falls back to the current macOS user. Copy `sbjat/.env.example` when creating a new local configuration. The real `.env` file is excluded from Git and must never be committed.
+
+Rotating application logs are written to the current user's `~/logs` directory.
+
 # Release Notes
+1.6.10\
+restored `JRW_KEY` and `~/.profile` fallback for installed Jira automation\
+added `JIRA_USERNAME`, `CS_UN`, and `TALOS_USERNAME` username aliases\
+added `SBJAT_ENV_FILE` for an explicit configuration path and improved missing-key guidance\
+
+1.6.9\
+prevented geolocation and CIDR tickets from being transitioned incorrectly or more than once\
+reused Jira issue objects and cached duplicate intelligence lookups to reduce API and DNS traffic\
+added retry/backoff behavior, bounded requests, structured results, and clearer operational logging\
+fixed malformed IPv6 extraction, invalid score lists, configuration validation, and Jira failure reporting\
+restored support for the installed Python 3.9 runtime and pinned urllib3 below v2 for LibreSSL compatibility\
+
 1.6.8\
 improved automation, performance, logging, and error handling\
+moved credentials into a Git-ignored `sbjat/.env` file with explicit environment references\
+standardized rotating log output under the current user's `~/logs` directory\
 
 1.6.7\
 removed setup.py and using pyproject.toml to build and install\

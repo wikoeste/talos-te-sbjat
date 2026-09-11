@@ -3,50 +3,81 @@ import os
 import re
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+
+ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
+PROFILE_FILE = Path.home() / ".profile"
+
+
+def _load_environment_file():
+    """Load an explicit configuration file or the source-tree sbjat/.env file."""
+    configured = os.getenv("SBJAT_ENV_FILE", "").strip()
+    path = Path(configured).expanduser() if configured else ENV_FILE
+    if path.is_file():
+        load_dotenv(path, override=False)
+
+
+_load_environment_file()
+
 
 def init():                                 # Global List of variables
     global uname,cecpw,sherlock,sherlockKey,boilerplates,version,jiraKey
     global juno,junoKey,geolocation,results
 
-def getKey(keyname):                        # take the search keyname and return the appropriate api key
-    """Return a key from the environment or the user's profile.
-
-    Environment variables make unattended runs independent from a login shell.
-    The legacy profile lookup remains as a fallback for existing installations.
-    """
-    environment_names = (keyname, keyname.upper(), f"SBJAT_{keyname.upper()}")
-    for name in environment_names:
-        value = os.getenv(name)
-        if value:
-            return value.strip()
-
-    profile = Path.home() / ".profile"
-    if not profile.is_file():
+def _profile_values(names):
+    """Read exact variable assignments from ~/.profile without executing it."""
+    if not PROFILE_FILE.is_file():
         return ""
-
-    pattern = re.compile(
-        rf"^(?:export\s+)?[^#=]*{re.escape(keyname)}[^=]*=(.*)$",
-        re.IGNORECASE,
+    assignment = re.compile(
+        r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$"
     )
-    with profile.open(encoding="utf-8") as fp:
-        for line in fp:
-            match = pattern.match(line.strip())
-            if match:
-                return match.group(1).strip().strip("\"'")
+    wanted = set(names)
+    try:
+        with PROFILE_FILE.open(encoding="utf-8") as profile:
+            for line in profile:
+                match = assignment.match(line)
+                if not match or match.group(1) not in wanted:
+                    continue
+                value = match.group(2).strip()
+                if value[:1] in {"'", '"'}:
+                    closing_quote = value.find(value[0], 1)
+                    if closing_quote > 0:
+                        value = value[1:closing_quote]
+                elif " #" in value:
+                    value = value.split(" #", 1)[0].rstrip()
+                if value:
+                    return value
+    except (OSError, UnicodeError):
+        return ""
     return ""
 
+
+def get_secret(*names):
+    """Return the first non-empty environment, .env, or ~/.profile value."""
+    expanded_names = []
+    for name in names:
+        expanded_names.append(name)
+        if not name.startswith("SBJAT_"):
+            expanded_names.append(f"SBJAT_{name}")
+    for name in expanded_names:
+        value = os.getenv(name, "").strip()
+        if value:
+            return value
+    return _profile_values(expanded_names)
+
 #Get user creds and API Keys at start
-uname        = getpass.getuser()
-cecpw        = ""
-sherlockKey  = getKey("sherlock")
+uname        = get_secret("JIRA_USERNAME", "CS_UN", "TALOS_USERNAME") or getpass.getuser()
+cecpw        = get_secret("CEC_PASSWORD", "CS_PW")
+sherlockKey  = get_secret("SHERLOCK_API_KEY")
 sherlock     = 'https://sherlock.ironport.com/webapi/'
 juno         = 'https://prod-juno-search-api.sv4.ironport.com/'
-junoKey      = getKey("jupiter")
-jiraKey	     = getKey("JRW")
+junoKey      = get_secret("JUPITER_API_KEY")
+jiraKey      = get_secret("JIRA_API_KEY", "JRW_KEY", "JRW")
 #results of all ips scores
 results = []
 # Version
-version      = '1.6.8'
+version      = '1.6.10'
 # GEO Location string check
 geolocation  = ['geo','GEO','geolocation','geo-location','GEOLOCATION','GEO-LOCATION','country','Country','None','none','Unknown','unknown','GeoBlock','GeoIP']
 # SBRS Boilerplates
